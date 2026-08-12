@@ -1,57 +1,78 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#FF4D3D">
+<meta name="theme-color" content="#3FA083">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Cowo">
-<title>Cowo</title>
+<meta name="apple-mobile-web-app-title" content="Kowo">
+<title>Kowo</title>
 <link id="mf" rel="manifest">
 
 <!-- ==========================================================================
-     COWO - prototype jouable, un seul fichier, hors-ligne.
-     4 joueurs, 2 equipes de 2, un seul telephone qui circule.
+     KOWO - prototype jouable, un seul fichier, hors-ligne.
+     4 joueurs, 2 equipes de 2, un seul telephone qui circule. Portrait.
      ========================================================================== -->
 
 <script>
 /* ============================================================
-   CORPUS - edite librement entre deux parties.
+   CORPUS - 100 mots. Edite librement entre deux parties.
    Les cles sont les valeurs en points.
+
+   Regles si tu elargis :
+   - un seul mot, au singulier, sans article ;
+   - aucune racine partagee avec un avatar ou un nom d'equipe
+     (pas de mousse, brume, tombe, chouette, ver, tibia, chandelle,
+     fougere, cendre) ;
+   - les ambiguites sont voulues (glace, sang, main).
    ============================================================ */
-const MOTS = {
-  10: ["chat","soleil","pain","voiture","mer","neige","football","café","lune","école"],
-  20: ["aéroport","miroir","orage","dentiste","guitare","valise","cirque","tunnel","récolte","cheminée"],
-  30: ["nostalgie","hasard","équilibre","rumeur","patience","frontière","vertige","compromis","héritage","silence"]
+const CORPUS = {
+  10: ["chat","soleil","pain","voiture","mer","neige","football","café","lune","école",
+       "chien","pizza","vélo","plage","feu","livre","dent","clé","pluie","montagne",
+       "téléphone","chaussure","glace","guerre","arbre","bébé","musique","œuf","porte","argent",
+       "nuit","poisson","fête","main","roi","sang","fleur","train","hiver","chanson"],
+  20: ["aéroport","miroir","orage","dentiste","guitare","valise","cirque","tunnel","récolte","cheminée",
+       "ascenseur","boussole","momie","naufrage","jumeau","aimant","ruche","phare","désert","moustache",
+       "labyrinthe","otage","épouvantail","bibliothèque","vaccin","marionnette","volcan","canapé","uniforme","échelle",
+       "hôpital","casserole","carnaval","squelette","grenier"],
+  30: ["nostalgie","hasard","équilibre","rumeur","patience","frontière","vertige","compromis","héritage","silence",
+       "jalousie","destin","routine","malaise","autorité","illusion","revanche","pudeur","hypocrisie","exil",
+       "mérite","absence","trahison","ennui","réputation"]
 };
 
-/* Composition de la main de 5 mots proposee au donneur : 2 faciles, 2 moyens, 1 dur. */
+const EQUIPES = {
+  lichen: { long: "les Fougères Furieuses", court: "les Fougères" },
+  braise: { long: "les Cendres Contrariées", court: "les Cendres" }
+};
+
+/* Composition de la main de 5 mots proposee au donneur : les paliers sont melanges. */
 const TIRAGE = { 10: 2, 20: 2, 30: 1 };
 
 /* Objectif de points. */
 const CIBLE = 100;
 
-/* Avatars - 8 au choix. Les 2 premiers pris forment l'equipe A, les 2 suivants l'equipe B. */
+/* Les 8 avatars proposes a la mise en place. */
 const AVATARS = [
-  { id:"renardo",      nom:"Renardo",      emoji:"🦊" },
-  { id:"loutrix",      nom:"Loutrix",      emoji:"🦦" },
-  { id:"herissou",     nom:"Hérissou",     emoji:"🦔" },
-  { id:"pangolino",    nom:"Pangolino",    emoji:"🦥" },
-  { id:"belettine",    nom:"Belettine",    emoji:"🐾" },
-  { id:"toucannelle",  nom:"Toucannelle",  emoji:"🦜" },
-  { id:"castorbec",    nom:"Castorbec",    emoji:"🦫" },
-  { id:"marmouflette", nom:"Marmouflette", emoji:"🐹" }
+  { id:"mousserot",    nom:"Mousserot",    emoji:"🍄" },
+  { id:"brumaille",    nom:"Brumaille",    emoji:"👻" },
+  { id:"tibiane",      nom:"Tibiane",      emoji:"🦴" },
+  { id:"grognemousse", nom:"Grognemousse", emoji:"🐗" },
+  { id:"chandelou",    nom:"Chandelou",    emoji:"🕯️" },
+  { id:"vermoulette",  nom:"Vermoulette",  emoji:"🪱" },
+  { id:"chouettombe",  nom:"Chouettombe",  emoji:"🦉" },
+  { id:"pourrissou",   nom:"Pourrissou",   emoji:"🧟" }
 ];
 </script>
 
 <style>
 :root{
-  --creme:#F6EFE1;
-  --creme-2:#EBE0CB;
-  --encre:#1C1A17;
-  --corail:#FF4D3D;
-  --corail-fonce:#D9331F;
-  --turquoise:#00BFA6;
-  --turquoise-fonce:#00907E;
+  --parchemin:#F4E9D2;
+  --parchemin-2:#E6D7B6;
+  --clair:#FFF8E7;
+  --encre:#2B2018;
+  --lichen:#3FA083;
+  --lichen-f:#27705A;
+  --braise:#E2572B;
+  --braise-f:#AE3512;
   --r:22px;
   --font:"Arial Rounded MT Bold","Trebuchet MS",Verdana,system-ui,-apple-system,"Segoe UI",sans-serif;
 }
@@ -62,7 +83,7 @@ html,body{
   height:100%;
   overflow:hidden;
   overscroll-behavior:none;
-  background:var(--creme);
+  background:var(--parchemin);
   color:var(--encre);
   font-family:var(--font);
   font-weight:900;
@@ -75,240 +96,366 @@ body{
   position:fixed; inset:0;
 }
 
+/* Grain de parchemin : deux trames de points, aucune image. */
+body::after{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:200;
+  background-image:
+    radial-gradient(rgba(60,40,20,.10) .8px, transparent .9px),
+    radial-gradient(rgba(60,40,20,.07) .8px, transparent .9px);
+  background-size:5px 5px, 8px 8px;
+  background-position:0 0, 3px 4px;
+  mix-blend-mode:multiply;
+  opacity:.75;
+}
+
 /* ---------- ecrans ---------- */
 .screen{
   display:none;
   position:fixed; inset:0;
   flex-direction:column;
-  padding:calc(env(safe-area-inset-top,0px) + 18px) 18px calc(env(safe-area-inset-bottom,0px) + 18px);
-  background:var(--creme);
+  padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 16px);
+  background:var(--parchemin);
   z-index:1;
 }
 .screen.on{ display:flex; z-index:2; }
-/* L'ecran tampon passe au-dessus de tout : rien ne transparait derriere lui. */
-#s-tampon{ z-index:50; }
+/* Le tampon passe au-dessus de tout : rien ne transparait derriere lui. */
+#s-tampon{ z-index:60; }
+#s-banni{ z-index:55; }
 
-.eqA{ background:var(--corail); color:#fff; }
-.eqB{ background:var(--turquoise); color:#fff; }
+.eq-lichen{ background:var(--lichen); color:var(--clair); }
+.eq-braise{ background:var(--braise); color:var(--clair); }
 
 .grow{ flex:1 1 auto; min-height:0; }
 .center{ display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:14px; }
-.row{ display:flex; gap:12px; }
+.row{ display:flex; gap:12px; align-items:center; justify-content:center; }
+.pile{ display:flex; flex-direction:column; gap:12px; }
+.pile-bas{ margin-top:auto; display:flex; flex-direction:column; gap:12px; padding-top:14px; }
 
-/* ---------- typo ---------- */
+/* ---------- typo : grasse, arrondie, un peu bancale ---------- */
 h1{ font-size:clamp(44px,15vw,86px); line-height:.92; letter-spacing:-2px; }
-h2{ font-size:clamp(26px,7.5vw,40px); line-height:1.05; }
-.kicker{ font-size:clamp(15px,4.2vw,20px); text-transform:uppercase; letter-spacing:2px; opacity:.72; }
+h2{ font-size:clamp(28px,8vw,44px); line-height:1.04; letter-spacing:-1px; }
+.enorme{ font-size:clamp(34px,10.5vw,56px); line-height:1.02; letter-spacing:-1px; }
+.kicker{ font-size:clamp(14px,4vw,19px); text-transform:uppercase; letter-spacing:3px; opacity:.78; }
+.mini{ font-size:16px; font-weight:900; opacity:.8; letter-spacing:.4px; line-height:1.3; }
 .mot{ font-size:clamp(38px,12vw,72px); line-height:1; letter-spacing:-1px; word-break:break-word; }
-.geant{ font-size:clamp(80px,30vw,180px); line-height:1; }
-.avatar-xl{ font-size:clamp(100px,36vw,200px); line-height:1; }
+.bancal{ display:inline-block; transform:rotate(-2.2deg); }
+
+/* ---------- emoji : tres grands, respiration lente ---------- */
+.geant{ font-size:clamp(76px,26vw,150px); line-height:1.1; animation:flotte 2.8s ease-in-out infinite; }
+.avatar-xl{ font-size:clamp(96px,34vw,190px); line-height:1.1; animation:flotte 2.4s ease-in-out infinite; }
+@keyframes flotte{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-12px) } }
 
 /* ---------- boutons ---------- */
 button{
   font-family:var(--font); font-weight:900; color:inherit;
-  border:none; background:none; cursor:pointer;
-  touch-action:manipulation;
+  border:none; background:none; cursor:pointer; touch-action:manipulation;
 }
 .btn{
   min-height:66px; width:100%;
   border-radius:var(--r);
-  background:var(--encre); color:var(--creme);
-  font-size:clamp(20px,5.6vw,28px);
-  padding:14px 18px;
-  display:flex; align-items:center; justify-content:center; gap:10px;
+  background:var(--encre); color:var(--clair);
+  font-size:clamp(19px,5.2vw,27px);
+  padding:12px 16px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
   border-bottom:6px solid rgba(0,0,0,.35);
+  box-shadow:0 6px 18px rgba(60,40,20,.14);
+  text-align:center; line-height:1.1;
 }
 .btn:active{ transform:translateY(3px); border-bottom-width:3px; }
-.btn.clair{ background:var(--creme); color:var(--encre); border-bottom-color:rgba(0,0,0,.22); }
-.btn.corail{ background:var(--corail); color:#fff; border-bottom-color:var(--corail-fonce); }
-.btn.contour{ background:transparent; color:var(--encre); border:4px solid var(--encre); border-bottom-width:8px; }
-.btn[disabled]{ opacity:.28; pointer-events:none; }
-.btn.grand{ min-height:88px; font-size:clamp(23px,6.6vw,34px); }
+.btn.clair{ background:var(--clair); color:var(--encre); border-bottom-color:rgba(60,40,20,.3); }
+.btn.lichen{ background:var(--lichen); color:var(--clair); border-bottom-color:var(--lichen-f); }
+.btn.braise{ background:var(--braise); color:var(--clair); border-bottom-color:var(--braise-f); }
+.btn.contour{ background:transparent; color:currentColor; border:4px solid currentColor; border-bottom-width:8px; box-shadow:none; }
+.btn[disabled]{ opacity:.26; pointer-events:none; }
+.btn.grand{ min-height:88px; font-size:clamp(22px,6.2vw,32px); }
+.btn .sous{ font-size:15px; opacity:.85; letter-spacing:.3px; }
 
-/* ---------- grille avatars ---------- */
-.grid8{ display:grid; grid-template-columns:1fr 1fr; gap:12px; align-content:start; overflow:auto; }
+/* ---------- mise en place ---------- */
+.etape{ text-align:center; }
+.etape .nom-eq{ font-size:clamp(30px,8.6vw,46px); line-height:1; letter-spacing:-1px; }
+.etape .champ{ font-size:clamp(19px,5.4vw,26px); margin-top:6px; }
+
+/* recapitulatif : une ligne par equipe, l'ordre des places fait le groupement */
+.recap{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:12px 0 10px; }
+.past{
+  display:flex; align-items:center; gap:6px;
+  border-radius:999px; padding:7px 13px; min-height:44px;
+  font-size:15px; letter-spacing:.3px;
+  background:rgba(255,255,255,.22); border:3px solid rgba(255,255,255,.5);
+}
+.past .e{ font-size:24px; line-height:1; }
+.past.vide{ opacity:.45; }
+.past.p-lichen{ background:var(--lichen); border-color:var(--lichen-f); color:var(--clair); }
+.past.p-braise{ background:var(--braise); border-color:var(--braise-f); color:var(--clair); }
+
+.grid8{ display:grid; grid-template-columns:1fr 1fr; gap:10px; align-content:stretch; overflow:auto; }
 .av{
-  min-height:110px; border-radius:var(--r);
-  background:var(--creme-2); border:4px solid var(--encre); border-bottom-width:8px;
+  min-height:96px; border-radius:var(--r);
+  background:var(--clair); color:var(--encre);
+  border:4px solid var(--encre); border-bottom-width:8px;
   display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
 }
-.av .e{ font-size:52px; line-height:1; }
-.av .n{ font-size:15px; letter-spacing:.5px; }
-.av[data-pris="1"]{ opacity:.28; pointer-events:none; }
-.av[data-eq="A"]{ background:var(--corail); color:#fff; }
-.av[data-eq="B"]{ background:var(--turquoise); color:#fff; }
+.av:active{ transform:translateY(3px); border-bottom-width:4px; }
+.av .e{ font-size:46px; line-height:1; }
+.av .n{ font-size:15px; letter-spacing:.4px; }
+.av[data-pris="1"]{ opacity:.3; pointer-events:none; }
+
+/* ---------- confirmation des equipes ---------- */
+#s-confirm{ padding:0; }
+.moitie{
+  flex:1 1 0; min-height:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:6px; text-align:center; padding:14px;
+}
+.moitie .titre-eq{ font-size:clamp(24px,7vw,36px); line-height:1; letter-spacing:-1px; }
+.moitie .duo{ display:flex; gap:14px; align-items:center; justify-content:center; }
+.moitie .duo .j{ display:flex; flex-direction:column; align-items:center; gap:2px; }
+.moitie .duo .e{ font-size:100px; line-height:1; }
+.moitie .duo .n{ font-size:16px; }
+.moitie .parle{ font-size:15px; opacity:.9; }
+.cf-bas{
+  padding:14px 16px calc(env(safe-area-inset-bottom,0px) + 16px);
+  background:var(--parchemin);
+  display:flex; flex-direction:column; gap:10px;
+}
 
 /* ---------- mots a choisir ---------- */
 .motbtn{
   width:100%; flex:1 1 0; min-height:72px;
   border-radius:var(--r); border:4px solid var(--encre); border-bottom-width:8px;
-  background:var(--creme); color:var(--encre);
+  background:var(--clair); color:var(--encre);
   display:flex; align-items:center; justify-content:space-between; gap:12px;
   padding:10px 16px;
   font-size:clamp(22px,6.4vw,32px);
 }
 .motbtn:active{ transform:translateY(3px); border-bottom-width:4px; }
 .pastille-val{
-  font-size:clamp(17px,4.6vw,22px);
-  background:var(--encre); color:var(--creme);
+  font-size:clamp(16px,4.4vw,21px);
+  background:var(--encre); color:var(--clair);
   border-radius:999px; padding:8px 14px; flex:0 0 auto;
 }
 
 /* ---------- encheres : au moins un tiers de la hauteur d'ecran ---------- */
-.encheres{ display:flex; flex-direction:column; gap:12px; flex:1 1 auto; min-height:42vh; }
-.encheres .btn{ flex:1 1 0; min-height:76px; font-size:clamp(24px,7vw,34px); }
-.encheres .btn .n{ font-size:clamp(40px,12vw,64px); }
+.encheres{ display:flex; flex-direction:column; gap:10px; flex:1 1 auto; min-height:40vh; }
+.encheres .btn{ flex:1 1 0; min-height:76px; }
+.encheres .btn .n{ font-size:clamp(38px,11vw,60px); line-height:1; }
+.encheres .btn .u{ font-size:clamp(16px,4.4vw,21px); opacity:.9; }
 
-/* ---------- pastilles de coups ---------- */
-.coups{ display:flex; gap:18px; justify-content:center; align-items:center; }
-.coup{
-  width:clamp(48px,15vw,74px); height:clamp(48px,15vw,74px);
-  border-radius:999px; border:6px solid currentColor; background:currentColor;
+/* ---------- braises ---------- */
+.braises{ display:flex; gap:16px; justify-content:center; align-items:center; }
+.braise-p{
+  width:clamp(40px,12vw,60px); height:clamp(40px,12vw,60px);
+  border-radius:999px;
+  border:5px solid rgba(0,0,0,.22);
+  background:radial-gradient(circle at 38% 32%, #FFE9A8 0%, #FFB43F 45%, #E2572B 100%);
+  box-shadow:0 0 22px rgba(255,170,60,.75);
 }
-.coup.eteint{ background:transparent; opacity:.5; }
-.coup.hors{ opacity:.14; transform:scale(.5); }
+/* une braise qui s'eteint : plus de feu, juste le cerne */
+.braise-p.eteinte{
+  background:rgba(0,0,0,.14); border-color:rgba(255,255,255,.4);
+  box-shadow:none; opacity:.75;
+}
+.braise-p.hors{ background:none; border-color:currentColor; opacity:.18; transform:scale(.5); box-shadow:none; }
 
-/* ---------- divers ---------- */
+/* ---------- ecran arbitre ---------- */
+.mn-haut{ display:flex; align-items:center; gap:10px; min-height:48px; }
+.mn-haut .braises{ flex:1; }
+.annuler{
+  min-height:44px; padding:6px 12px; border-radius:999px;
+  border:3px solid currentColor; font-size:14px; letter-spacing:.4px; opacity:.85;
+}
+.annuler[disabled]{ opacity:.22; pointer-events:none; }
+.temps{
+  align-self:stretch; text-align:center;
+  border-radius:16px; padding:8px 12px;
+  font-size:15px; letter-spacing:3px; text-transform:uppercase;
+}
+.temps.t1{ background:var(--encre); color:var(--clair); }
+.temps.t2{ background:var(--clair); color:var(--encre); }
+.rappel{ font-size:14px; font-weight:900; opacity:.9; line-height:1.3; letter-spacing:.2px; }
+.voir{
+  min-height:52px; padding:10px 20px; border-radius:999px;
+  background:rgba(0,0,0,.22); color:currentColor;
+  border:3px dashed currentColor; font-size:17px; letter-spacing:.5px;
+}
+.boite-mot{
+  min-height:64px; align-self:stretch;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:16px; border:3px dashed rgba(255,255,255,.45);
+  font-size:clamp(28px,8vw,46px); letter-spacing:-1px; padding:6px 10px;
+}
+.deux{ display:flex; gap:12px; margin-top:auto; padding-top:14px; }
+.deux .btn{ flex:1 1 0; min-height:96px; }
+
+/* ---------- score ---------- */
 .score{ display:flex; gap:10px; margin-top:12px; }
 .score>div{
   flex:1; border-radius:var(--r); padding:10px 8px; text-align:center;
-  background:var(--creme); border:5px solid var(--encre); border-bottom-width:9px;
+  background:var(--clair); color:var(--encre);
+  border:5px solid var(--encre); border-bottom-width:9px;
+  box-shadow:0 0 0 3px rgba(43,32,24,.18);   /* le cadre reste lisible sur fond colore */
 }
 .score .pts{ font-size:clamp(34px,10vw,52px); line-height:1; }
-.score .lbl{ font-size:24px; line-height:1.2; }
+.score .lbl{ font-size:15px; line-height:1.2; }
+.score .em{ font-size:26px; line-height:1.1; }
+
 .bandeau{
   border-radius:var(--r); padding:14px 16px; text-align:center;
-  background:rgba(0,0,0,.14); font-size:clamp(17px,4.6vw,22px); line-height:1.25;
+  background:rgba(0,0,0,.16); font-size:clamp(17px,4.6vw,22px); line-height:1.3;
 }
-.pile{ display:flex; flex-direction:column; gap:12px; }
-.pile-bas{ margin-top:auto; display:flex; flex-direction:column; gap:12px; padding-top:14px; }
 
+/* ---------- debug ---------- */
 #debug-open{
   position:fixed; left:6px; top:calc(env(safe-area-inset-top,0px) + 6px);
   width:44px; height:44px; border-radius:999px;
-  background:rgba(0,0,0,.07); color:rgba(0,0,0,.4);
-  font-size:16px; z-index:40; display:none;
+  background:rgba(60,40,20,.08); color:rgba(60,40,20,.45);
+  font-size:15px; z-index:40; display:none;
   align-items:center; justify-content:center;
 }
 #debug-open.on{ display:flex; }
-
+#dbg-stats{ font-size:13px; line-height:1.35; opacity:.75; }
 #logbox{
   flex:1; min-height:0; overflow:auto;
   background:#fff; border:3px solid var(--encre); border-radius:16px;
   padding:10px; font-family:ui-monospace,Menlo,Consolas,monospace; font-weight:400;
-  font-size:12px; white-space:pre; -webkit-user-select:text; user-select:text;
+  font-size:11px; white-space:pre; -webkit-user-select:text; user-select:text;
 }
-.mini{ font-size:15px; opacity:.75; letter-spacing:.5px; line-height:1.3; }
 </style>
 
 <!-- ================= ACCUEIL ================= -->
 <div class="screen on" id="s-accueil">
   <div class="grow center">
-    <div class="kicker">un mot, trois coups</div>
-    <h1>COWO</h1>
-    <div class="row" style="font-size:52px">🦊🦦🦔🦫</div>
+    <div class="kicker">un mot, trois braises</div>
+    <h1><span class="bancal">KOWO</span></h1>
+    <div class="row" style="font-size:46px">🍄👻🦴🐗</div>
     <div class="mini">4 joueurs · 2 équipes · 1 téléphone</div>
   </div>
   <div class="pile-bas">
-    <button class="btn corail grand" id="b-rejouer" style="display:none">Rejouer</button>
-    <button class="btn grand" id="b-nouvelle">Nouvelle partie</button>
+    <button class="btn lichen grand" id="b-nouvelle">Que l'on forme les équipes</button>
   </div>
 </div>
 
-<!-- ================= AVATARS ================= -->
+<!-- ================= MISE EN PLACE ================= -->
 <div class="screen" id="s-avatars">
-  <div class="center" style="gap:4px; margin-bottom:12px">
-    <h2 id="av-titre">Joueur 1, choisis ton avatar</h2>
-    <div class="mini" id="av-sous">Les 2 premiers forment l'équipe corail</div>
+  <div class="etape">
+    <div class="nom-eq" id="mp-equipe">Fougères Furieuses</div>
+    <div class="champ" id="mp-champion">champion 1 sur 2</div>
   </div>
-  <div class="grid8 grow" id="av-grid"></div>
+  <div class="recap" id="mp-recap"></div>
+  <div class="grid8 grow" id="mp-grid"></div>
   <div class="pile-bas">
-    <button class="btn contour" id="b-av-reset">Recommencer</button>
+    <button class="btn contour" id="b-mp-retour">Retour</button>
+  </div>
+</div>
+
+<!-- ================= CONFIRMATION DES EQUIPES ================= -->
+<div class="screen" id="s-confirm">
+  <div class="moitie eq-lichen" id="cf-lichen"></div>
+  <div class="moitie eq-braise" id="cf-braise"></div>
+  <div class="cf-bas">
+    <button class="btn grand" id="b-commencer">Que la partie commence</button>
+    <button class="btn contour" id="b-changer">Changer</button>
   </div>
 </div>
 
 <!-- ================= TIRAGE AU SORT ================= -->
 <div class="screen" id="s-tirage">
   <div class="grow center">
-    <div class="kicker" style="opacity:.85">tirage au sort</div>
+    <div class="kicker">tirage au sort</div>
     <div class="geant" id="tir-emoji">🎲</div>
     <h2 id="tir-txt">…</h2>
   </div>
   <div class="pile-bas">
-    <button class="btn clair grand" id="b-tirage">C'est parti</button>
+    <button class="btn clair grand" id="b-tirage">Advienne que pourra</button>
   </div>
 </div>
 
 <!-- ================= TAMPON - piece critique ================= -->
 <div class="screen" id="s-tampon">
   <div class="grow center">
-    <div class="kicker" style="opacity:.85">passe le téléphone à</div>
-    <div class="avatar-xl" id="tp-emoji">🦊</div>
-    <h1 id="tp-nom" style="font-size:clamp(34px,10vw,56px)">…</h1>
-    <div class="bandeau" id="tp-note">Personne d'autre ne regarde l'écran.</div>
+    <div class="kicker" id="tp-kicker">passe le téléphone à</div>
+    <div class="avatar-xl" id="tp-emoji">🍄</div>
+    <h2 id="tp-nom">…</h2>
+    <div class="bandeau" id="tp-note">…</div>
   </div>
   <div class="pile-bas">
-    <button class="btn clair grand" id="b-tampon">J'y vais</button>
+    <button class="btn clair grand" id="b-tampon">…</button>
   </div>
 </div>
 
 <!-- ================= CHOIX DU MOT ================= -->
 <div class="screen" id="s-mots">
   <div class="center" style="gap:2px; margin-bottom:10px">
-    <div class="kicker" style="opacity:.85">choisis ton mot</div>
-    <div class="mini" id="mots-qui" style="opacity:.9">…</div>
+    <div class="kicker">choisis ton mot</div>
+    <div class="mini" id="mots-qui">…</div>
   </div>
   <div class="pile grow" id="mots-liste"></div>
 </div>
 
 <!-- ================= PARI D'OUVERTURE ================= -->
 <div class="screen" id="s-pari">
-  <div class="center" style="gap:4px; margin-bottom:10px">
-    <div class="kicker" style="opacity:.85">en combien de coups ?</div>
+  <div class="center" style="gap:4px; margin-bottom:8px">
+    <div class="kicker">en combien de coups ?</div>
     <div class="mot" id="pari-mot">…</div>
-    <div class="mini" id="pari-val" style="opacity:.9">…</div>
+    <div class="mini" id="pari-val">…</div>
   </div>
   <div class="encheres" id="pari-btns"></div>
 </div>
 
 <!-- ================= CONTRE ================= -->
 <div class="screen" id="s-contre">
-  <div class="center" style="gap:2px">
-    <div class="kicker" style="opacity:.85">ils annoncent</div>
-    <div class="geant" id="ct-pari">…</div>
-    <div class="mot" id="ct-mot" style="font-size:clamp(30px,9vw,52px)">…</div>
-    <div class="mini" id="ct-val" style="opacity:.9">…</div>
+  <div class="center" style="gap:0">
+    <div class="kicker" id="ct-kicker">ils annoncent</div>
+    <div class="geant" id="ct-pari" style="animation:none">…</div>
+    <div class="enorme" id="ct-mot">…</div>
+    <div class="mini" id="ct-val">…</div>
   </div>
-  <div class="encheres" id="ct-btns" style="min-height:34vh; margin-top:12px"></div>
+  <div class="encheres" id="ct-btns" style="min-height:32vh; margin-top:10px"></div>
   <div class="pile-bas">
     <button class="btn grand" id="b-laisse">Je laisse la main</button>
   </div>
 </div>
 
-<!-- ================= REVELATION AU DONNEUR ================= -->
+<!-- ================= REVELATION AU DONNEUR RETENU ================= -->
 <div class="screen" id="s-revele">
   <div class="grow center">
-    <div class="kicker" style="opacity:.85">tu fais deviner</div>
-    <div class="mot" id="rv-mot" style="font-size:clamp(44px,14vw,88px)"></div>
+    <div class="kicker">tu fais deviner</div>
+    <div class="mot" id="rv-mot"></div>
+    <div class="braises" id="rv-braises"></div>
     <div class="bandeau" id="rv-note"></div>
   </div>
   <div class="pile-bas">
-    <button class="btn clair grand" id="b-revele">J'ai vu, je passe aux arbitres</button>
+    <button class="btn clair grand" id="b-revele">J'ai retenu le mot</button>
   </div>
 </div>
 
-<!-- ================= MANCHE ================= -->
+<!-- ================= MANCHE - ecran arbitre ================= -->
 <div class="screen" id="s-manche">
-  <div class="center" style="gap:6px">
-    <div class="kicker" style="opacity:.85">vous arbitrez</div>
-    <div class="mot" id="mn-mot" style="font-size:clamp(34px,10vw,60px)"></div>
-    <div class="mini" id="mn-qui" style="opacity:.9"></div>
+  <div class="mn-haut">
+    <button class="annuler" id="b-annuler" disabled>↶ annuler</button>
+    <div class="braises" id="mn-braises"></div>
   </div>
   <div class="grow center">
-    <div class="coups" id="mn-coups"></div>
-    <h2 id="mn-consigne">…</h2>
+    <div class="temps t1" id="mn-temps">temps 1 · l'indice</div>
+    <h2 id="mn-question">…</h2>
+    <div class="rappel">banni — le mot, sa famille, plus d'un mot, les gestes</div>
+    <button class="voir" id="b-voir">appuie pour voir le mot</button>
+    <div class="boite-mot" id="mn-mot"></div>
   </div>
-  <div class="pile-bas" id="mn-btns"></div>
+  <div class="deux" id="mn-btns"></div>
+</div>
+
+<!-- ================= CONFIRMATION D'INDICE BANNI ================= -->
+<div class="screen" id="s-banni">
+  <div class="grow center">
+    <div class="geant" style="animation:none">🚫</div>
+    <h2 id="bn-txt">…</h2>
+    <div class="bandeau">Le tour s'arrête sur-le-champ, aucune réponse n'est proposée.</div>
+  </div>
+  <div class="deux">
+    <button class="btn contour" id="b-banni-non">Retour</button>
+    <button class="btn clair" id="b-banni-oui">Confirmer</button>
+  </div>
 </div>
 
 <!-- ================= RESOLUTION ================= -->
@@ -327,21 +474,21 @@ button{
 <!-- ================= FIN ================= -->
 <div class="screen" id="s-fin">
   <div class="grow center">
-    <div class="kicker" style="opacity:.85">fin de partie</div>
+    <div class="kicker">fin de partie</div>
     <div class="geant" id="fin-emoji">🏆</div>
-    <h1 id="fin-titre" style="font-size:clamp(32px,10vw,60px)">…</h1>
+    <h2 id="fin-titre">…</h2>
   </div>
   <div class="score" id="fin-score"></div>
   <div class="pile-bas">
     <button class="btn clair grand" id="b-revanche">Revanche, mêmes équipes</button>
-    <button class="btn contour" id="b-accueil" style="border-color:rgba(255,255,255,.85); color:#fff">Accueil</button>
+    <button class="btn contour" id="b-accueil">Changer les équipes</button>
   </div>
 </div>
 
 <!-- ================= DEBUG ================= -->
 <div class="screen" id="s-debug">
-  <div class="center" style="gap:2px; margin-bottom:10px">
-    <h2>Log des tours</h2>
+  <div class="center" style="gap:2px; margin-bottom:8px">
+    <h2 style="font-size:28px">Log des tours</h2>
     <div class="mini" id="dbg-stats">…</div>
   </div>
   <div id="logbox"></div>
@@ -361,7 +508,7 @@ button{
    ============================================================ */
 const el = (id) => document.getElementById(id);
 const melange = (a) => { a = a.slice(); for (let i=a.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; const t=a[i]; a[i]=a[j]; a[j]=t; } return a; };
-const CLE_LS = "cowo.equipes.v1";
+const CLE_LS = "kowo.equipes.v1";
 
 /* Verrou anti double-tap : tout changement d'ecran gele les taps 400 ms. */
 let verrouJusqu = 0;
@@ -374,85 +521,160 @@ function tap(cible, fn){
   n.addEventListener("click", (e) => { e.preventDefault(); if (bloque()) return; fn(e); });
 }
 
-const ECRANS = ["s-accueil","s-avatars","s-tirage","s-tampon","s-mots","s-pari","s-contre",
-                "s-revele","s-manche","s-resultat","s-fin","s-debug"];
+const ECRANS = ["s-accueil","s-avatars","s-confirm","s-tirage","s-tampon","s-mots","s-pari",
+                "s-contre","s-revele","s-manche","s-banni","s-resultat","s-fin","s-debug"];
 
 function va(id){
   ECRANS.forEach((e) => el(e).classList.toggle("on", e === id));
-  el("debug-open").classList.toggle("on", id === "s-accueil" || id === "s-resultat" || id === "s-fin");
+  el("debug-open").classList.toggle("on",
+    id === "s-accueil" || id === "s-confirm" || id === "s-resultat" || id === "s-fin");
   verrouille();
 }
+
+/* ============================================================
+   VOCABULAIRE D'EQUIPE
+   Forme longue sur les ecrans solennels, forme courte partout ailleurs.
+   ============================================================ */
+const long      = (t) => EQUIPES[t].long;
+const court     = (t) => EQUIPES[t].court;
+const sansArt   = (t) => EQUIPES[t].long.replace(/^les\s+/i, "");   // « Fougères Furieuses »
+const autre     = (t) => (t === "lichen" ? "braise" : "lichen");
+const classeEq  = (t) => "eq-" + t;
 
 /* ============================================================
    ETAT
    ============================================================ */
 const E = {
-  joueurs: [],                 // 4 joueurs : index 0-1 = equipe A, 2-3 = equipe B
-  score: { A:0, B:0 },
-  ouvreur: "A",
-  premierOuvreur: "A",
-  donneurIdx: { A:0, B:0 },    // qui, dans l'equipe, tient le role de donneur ce tour
+  joueurs: [],                        // 4 joueurs, dans l'ordre de selection
+  score: { lichen:0, braise:0 },
+  ouvreur: "lichen",
+  rot: { lichen:0, braise:0 },        // curseur de donneur, par equipe
   numeroTour: 0,
-  utilises: new Set(),
+  utilises: new Set(),                // tirage sans remise sur toute la partie
   log: [],
-  t: null                      // tour en cours
+  finProgrammee: false,               // une equipe a franchi la cible : dernier tour en cours
+  t: null                             // tour en cours
 };
 
-const equipe    = (t) => (t === "A" ? [E.joueurs[0], E.joueurs[1]] : [E.joueurs[2], E.joueurs[3]]);
-const donneur   = (t) => equipe(t)[E.donneurIdx[t]];
-const devineur  = (t) => equipe(t)[1 - E.donneurIdx[t]];
-const autre     = (t) => (t === "A" ? "B" : "A");
-const nomEquipe = (t) => (t === "A" ? "équipe corail" : "équipe turquoise");
-const classeEq  = (t) => (t === "A" ? "eqA" : "eqB");
-const emojis    = (t) => equipe(t).map((j) => j.emoji).join("");
+const equipe   = (t) => E.joueurs.filter((j) => j.equipe === t);
+const donneur  = (t) => equipe(t)[E.rot[t]];
+const devineur = (t) => equipe(t)[1 - E.rot[t]];
+const emojis   = (t) => equipe(t).map((j) => j.emoji).join("");
 
 /* ============================================================
-   MISE EN PLACE
+   MISE EN PLACE - une seule grille, quatre etapes explicites.
    ============================================================ */
-let choix = [];
+const ETAPES = [
+  { eq:"lichen", n:1 }, { eq:"lichen", n:2 },
+  { eq:"braise", n:1 }, { eq:"braise", n:2 }
+];
 
-function construitGrille(){
-  const g = el("av-grid");
+let choix = [];        // ids, dans l'ordre : 0-1 lichen, 2-3 braise
+
+const equipeDeLaPlace = (i) => (i < 2 ? "lichen" : "braise");
+
+function dessineMiseEnPlace(){
+  const enCours = choix.length < 4 ? ETAPES[choix.length].eq : "braise";
+  const visible = el("s-avatars").classList.contains("on") ? " on" : "";
+
+  el("s-avatars").className = "screen" + visible + " " + classeEq(enCours);
+  el("mp-equipe").textContent = sansArt(enCours);
+  el("mp-champion").textContent = choix.length < 4
+    ? "champion " + ETAPES[choix.length].n + " sur 2"
+    : "équipes au complet";
+
+  /* Bande de recapitulatif : 4 places, groupees par equipe. */
+  const rec = el("mp-recap");
+  rec.innerHTML = "";
+  for (let i = 0; i < 4; i++){
+    const t = equipeDeLaPlace(i);
+    const d = document.createElement("div");
+    const a = choix[i] ? AVATARS.find((x) => x.id === choix[i]) : null;
+    d.className = "past " + (a ? "p-" + t : "vide");
+    d.innerHTML = a
+      ? '<span class="e">' + a.emoji + '</span><span>' + a.nom + '</span>'
+      : '<span class="e">·</span><span>' + court(t).replace(/^les\s+/i, "") + '</span>';
+    rec.appendChild(d);
+  }
+
+  /* Grille de 8 : un tap suffit, l'avatar pris se grise definitivement. */
+  const g = el("mp-grid");
   g.innerHTML = "";
   AVATARS.forEach((a) => {
     const b = document.createElement("button");
     b.className = "av";
     b.innerHTML = '<div class="e">' + a.emoji + '</div><div class="n">' + a.nom + '</div>';
-    const pos = choix.indexOf(a.id);
-    if (pos >= 0) b.dataset.eq = pos < 2 ? "A" : "B";
-    else if (choix.length >= 4) b.dataset.pris = "1";
+    if (choix.includes(a.id) || choix.length >= 4) b.dataset.pris = "1";
     else tap(b, () => prendAvatar(a.id));
     g.appendChild(b);
   });
-  el("av-titre").textContent = choix.length < 4
-    ? "Joueur " + (choix.length + 1) + ", choisis ton avatar"
-    : "Équipes formées";
-  el("av-sous").textContent = choix.length < 2
-    ? "Les 2 premiers forment l'équipe corail"
-    : (choix.length < 4 ? "Les 2 suivants forment l'équipe turquoise" : "On y va");
+
+  el("b-mp-retour").disabled = choix.length === 0;
 }
 
 function prendAvatar(id){
   if (choix.includes(id) || choix.length >= 4) return;
   choix.push(id);
-  construitGrille();
+  dessineMiseEnPlace();
   if (choix.length === 4){
     verrouille();
-    setTimeout(() => { if (choix.length === 4) demarre(choix.slice()); }, 600);
+    // On laisse le recapitulatif se remplir sous les yeux avant de basculer.
+    setTimeout(() => { if (choix.length === 4) ecranConfirm(choix.slice(), true); }, 700);
   }
 }
 
+tap("b-mp-retour", () => { choix.pop(); dessineMiseEnPlace(); });
+
+function ouvreMiseEnPlace(){
+  choix = [];
+  dessineMiseEnPlace();
+  va("s-avatars");
+}
+tap("b-nouvelle", ouvreMiseEnPlace);
+tap("b-changer", ouvreMiseEnPlace);
+
+/* ---------- ecran de confirmation ---------- */
+let equipesEnAttente = null;
+
+function ecranConfirm(ids, deLaGrille){
+  equipesEnAttente = ids.slice();
+
+  ["lichen","braise"].forEach((t) => {
+    const membres = (t === "lichen" ? ids.slice(0,2) : ids.slice(2,4))
+      .map((id) => AVATARS.find((a) => a.id === id));
+    el("cf-" + t).innerHTML =
+      '<div class="titre-eq">' + long(t) + '</div>' +
+      '<div class="duo">' + membres.map((m) =>
+        '<div class="j"><div class="e">' + m.emoji + '</div><div class="n">' + m.nom + '</div></div>'
+      ).join("") + '</div>' +
+      '<div class="parle">' + membres[0].nom + ' parlera en premier pour ' + long(t) + '</div>';
+  });
+
+  el("b-commencer").textContent = deLaGrille ? "Que la partie commence" : "Reprendre les mêmes équipes";
+  va("s-confirm");
+}
+
+tap("b-commencer", () => { if (equipesEnAttente) demarre(equipesEnAttente.slice()); });
+
+/* ============================================================
+   DEMARRAGE
+   ============================================================ */
 function demarre(ids){
-  E.joueurs = ids.map((id) => Object.assign({}, AVATARS.find((a) => a.id === id)));
-  E.joueurs.forEach((j, i) => { j.equipe = i < 2 ? "A" : "B"; });
+  E.joueurs = ids.map((id, i) => {
+    const a = AVATARS.find((x) => x.id === id);
+    return { id:a.id, nom:a.nom, emoji:a.emoji, equipe:equipeDeLaPlace(i) };
+  });
   try { localStorage.setItem(CLE_LS, JSON.stringify(ids)); } catch(e){}
-  E.score = { A:0, B:0 };
-  E.donneurIdx = { A:0, B:0 };
+
+  E.score = { lichen:0, braise:0 };
+  // Le joueur choisi en premier dans une equipe est son premier donneur.
+  E.rot = { lichen:0, braise:0 };
   E.numeroTour = 0;
   E.utilises = new Set();
   E.log = [];
-  E.ouvreur = Math.random() < 0.5 ? "A" : "B";
-  E.premierOuvreur = E.ouvreur;
+  E.finProgrammee = false;
+  E.ouvreur = Math.random() < 0.5 ? "lichen" : "braise";
+  porteur = null;
   tirageAuSort();
 }
 
@@ -460,37 +682,50 @@ function tirageAuSort(){
   const t = E.ouvreur;
   el("s-tirage").className = "screen " + classeEq(t);
   el("tir-emoji").textContent = emojis(t);
-  el("tir-txt").innerHTML = "L'" + nomEquipe(t) + " ouvre<br>" + equipe(t).map((j) => j.nom).join(" &amp; ");
+  el("tir-txt").innerHTML = "Le sort désigne<br>" + long(t);
   va("s-tirage");
 }
+tap("b-tirage", () => nouveauTour());
 
 /* ============================================================
    ECRAN TAMPON - le mot n'entre dans le DOM qu'apres le tap.
    ============================================================ */
 let suiteTampon = null;
+let destTampon = null;
+let porteur = null;         // qui tient le telephone, pour ne pas s'annoncer a soi-meme
 
 /* Vide tous les noeuds porteurs du mot : au moment ou un tampon s'affiche,
    le mot n'existe nulle part dans le DOM. Chaque ecran le re-rend a l'arrivee. */
 function purgeMot(){
-  ["pari-mot","ct-mot","rv-mot","mn-mot"].forEach((id) => { el(id).textContent = ""; });
+  ["pari-mot","ct-mot","rv-mot","mn-mot","rs-detail"].forEach((id) => { el(id).textContent = ""; });
   el("mots-liste").innerHTML = "";
 }
 
 function tampon(destinataires, team, note, suite){
   purgeMot();
   const solo = destinataires.length === 1;
+  // Apres un vol, le voleur est deja seul devant l'ecran : pas de tampon vers soi-meme.
+  if (solo && porteur === destinataires[0].id){ suite(); return; }
   el("s-tampon").className = "screen " + classeEq(team);
-  el("tp-emoji").textContent = destinataires.map((j) => j.emoji).join("");
-  el("tp-nom").textContent   = destinataires.map((j) => j.nom).join(" & ");
-  el("tp-note").textContent  = note;
-  el("b-tampon").textContent = solo
-    ? "Je suis " + destinataires[0].nom + ", j'y vais"
-    : "On est " + destinataires.map((j) => j.nom).join(" et ") + ", on y va";
+  el("tp-kicker").textContent = solo ? "passe le téléphone à" : "passe le téléphone aux arbitres";
+  el("tp-emoji").textContent  = destinataires.map((j) => j.emoji).join("");
+  el("tp-nom").textContent    = solo ? destinataires[0].nom : sansArt(team);
+  el("tp-note").textContent   = note;
+  el("b-tampon").innerHTML = solo
+    ? "Je suis " + destinataires[0].nom + ",<span class='sous'>je jure de ne rien avoir vu</span>"
+    : "Nous sommes " + destinataires.map((j) => j.nom).join(" et ") +
+      ",<span class='sous'>nous jurons de n'avoir rien vu</span>";
   suiteTampon = suite;
+  destTampon = destinataires;
   va("s-tampon");
 }
 
-tap("b-tampon", () => { const s = suiteTampon; suiteTampon = null; if (s) s(); });
+tap("b-tampon", () => {
+  porteur = destTampon && destTampon.length === 1 ? destTampon[0].id : null;
+  const s = suiteTampon;
+  suiteTampon = null; destTampon = null;
+  if (s) s();
+});
 
 /* ============================================================
    DEROULE D'UN TOUR
@@ -498,17 +733,28 @@ tap("b-tampon", () => { const s = suiteTampon; suiteTampon = null; if (s) s(); }
 function nouveauTour(){
   E.numeroTour++;
   const o = E.ouvreur;
-  E.t = { ouvreur:o, mot:"", valeur:0, pariOuv:0, contre:false, pariRetenu:0, preneur:o, reussi:false };
-  tampon([donneur(o)], o, "Tu ouvres pour l'" + nomEquipe(o) + ".", ecranMots);
+  E.t = {
+    ouvreur:o, donneurOuv:donneur(o).nom,
+    mot:"", valeur:0, pariOuv:0, contre:false, pariRetenu:0,
+    preneur:o, donneurRetenu:"", issue:"", coupFin:0, points:"", volGardeLaMain:false
+  };
+  tampon([donneur(o)], o, "Tu ouvres pour " + long(o) + ". Choisis le mot.", ecranMots);
 }
 
+/* Tirage sans remise sur toute la partie : les 5 mots proposes sortent du sac. */
 function tirePaquet(){
   const paquet = [];
   Object.keys(TIRAGE).forEach((val) => {
     const n = TIRAGE[val];
-    let dispo = MOTS[val].filter((m) => !E.utilises.has(m));
-    if (dispo.length < n){ MOTS[val].forEach((m) => E.utilises.delete(m)); dispo = MOTS[val].slice(); }
-    melange(dispo).slice(0, n).forEach((m) => paquet.push({ mot:m, valeur:+val }));
+    let dispo = CORPUS[val].filter((m) => !E.utilises.has(m));
+    if (dispo.length < n){                                   // sac vide : on le regarnit
+      CORPUS[val].forEach((m) => E.utilises.delete(m));
+      dispo = CORPUS[val].slice();
+    }
+    melange(dispo).slice(0, n).forEach((m) => {
+      E.utilises.add(m);
+      paquet.push({ mot:m, valeur:+val });
+    });
   });
   return melange(paquet);
 }
@@ -516,31 +762,26 @@ function tirePaquet(){
 function ecranMots(){
   const o = E.t.ouvreur;
   el("s-mots").className = "screen " + classeEq(o);
-  el("mots-qui").textContent = donneur(o).emoji + " " + donneur(o).nom + " · " + nomEquipe(o);
+  el("mots-qui").textContent = donneur(o).emoji + " " + donneur(o).nom + " · " + court(o);
   const liste = el("mots-liste");
   liste.innerHTML = "";
   tirePaquet().forEach((c) => {
     const b = document.createElement("button");
     b.className = "motbtn";
     b.innerHTML = '<span>' + c.mot + '</span><span class="pastille-val">' + c.valeur + '</span>';
-    tap(b, () => {
-      E.t.mot = c.mot;
-      E.t.valeur = c.valeur;
-      E.utilises.add(c.mot);
-      ecranPari();
-    });
+    tap(b, () => { E.t.mot = c.mot; E.t.valeur = c.valeur; ecranPari(); });
     liste.appendChild(b);
   });
   va("s-mots");
 }
 
-function boutonsEnchere(box, max, fn){
+function boutonsEnchere(box, autorise, fn){
   box.innerHTML = "";
   [1,2,3].forEach((n) => {
     const b = document.createElement("button");
     b.className = "btn clair";
-    b.innerHTML = '<span class="n">' + n + '</span><span>coup' + (n > 1 ? "s" : "") + '</span>';
-    if (n > max) b.disabled = true;
+    b.innerHTML = '<span class="n">' + n + '</span><span class="u">coup' + (n > 1 ? "s" : "") + '</span>';
+    if (!autorise(n)) b.disabled = true;
     else tap(b, () => fn(n));
     box.appendChild(b);
   });
@@ -551,23 +792,30 @@ function ecranPari(){
   el("s-pari").className = "screen " + classeEq(o);
   el("pari-mot").textContent = E.t.mot;
   el("pari-val").textContent = E.t.valeur + " points";
-  boutonsEnchere(el("pari-btns"), 3, (n) => { E.t.pariOuv = n; versContre(); });
+  boutonsEnchere(el("pari-btns"), () => true, (n) => { E.t.pariOuv = n; versContre(); });
   va("s-pari");
 }
 
 function versContre(){
   const adv = autre(E.t.ouvreur);
-  tampon([donneur(adv)], adv, "Tu vas voir le mot. À toi de contrer, ou pas.", ecranContre);
+  tampon([donneur(adv)], adv, "Tu vas voir le mot. À toi de le voler, ou pas.", ecranContre);
 }
 
 function ecranContre(){
   const adv = autre(E.t.ouvreur);
   el("s-contre").className = "screen " + classeEq(adv);
+  el("ct-kicker").textContent = court(E.t.ouvreur) + " annoncent";
   el("ct-pari").textContent = E.t.pariOuv;
   el("ct-mot").textContent  = E.t.mot;
-  el("ct-val").textContent  = E.t.valeur + " points";
-  boutonsEnchere(el("ct-btns"), E.t.pariOuv, (n) => {
-    E.t.contre = true; E.t.preneur = adv; E.t.pariRetenu = n; versRevele();
+  el("ct-val").textContent  = E.t.pariOuv === 1
+    ? E.t.valeur + " points · un seul coup, le mot est involable"
+    : E.t.valeur + " points · vole en annonçant moins";
+  // Vol : strictement inferieur. L'egalite et les paris superieurs sont grises.
+  boutonsEnchere(el("ct-btns"), (n) => n < E.t.pariOuv, (n) => {
+    E.t.contre = true;
+    E.t.preneur = adv;
+    E.t.pariRetenu = n;
+    versRevele();
   });
   va("s-contre");
 }
@@ -581,159 +829,250 @@ tap("b-laisse", () => {
 
 function versRevele(){
   const p = E.t.preneur;
+  E.t.donneurRetenu = donneur(p).nom;
   tampon([donneur(p)], p,
-    "Tu fais deviner à " + devineur(p).nom + ", en " + E.t.pariRetenu + " coup" + (E.t.pariRetenu > 1 ? "s" : "") + ".",
+    "Tu fais deviner à " + devineur(p).nom + ", en " + E.t.pariRetenu +
+    " coup" + (E.t.pariRetenu > 1 ? "s" : "") + ".",
     ecranRevele);
+}
+
+function dessineBraises(cible, utilises){
+  cible.innerHTML = "";
+  for (let i = 0; i < 3; i++){
+    const d = document.createElement("div");
+    d.className = "braise-p" + (i >= E.t.pariRetenu ? " hors" : (i < utilises ? " eteinte" : ""));
+    cible.appendChild(d);
+  }
 }
 
 function ecranRevele(){
   const p = E.t.preneur;
   el("s-revele").className = "screen " + classeEq(p);
-  el("rv-mot").textContent  = E.t.mot;                       // rendu seulement maintenant
-  el("rv-note").textContent = E.t.valeur + " points · " + E.t.pariRetenu + " coup" +
-                              (E.t.pariRetenu > 1 ? "s" : "") + " · ne prononce jamais ce mot";
+  el("rv-mot").textContent = E.t.mot;                        // rendu seulement maintenant
+  dessineBraises(el("rv-braises"), 0);
+  el("rv-note").textContent = E.t.valeur + " points · un seul mot par indice · ne prononce jamais le mot";
   va("s-revele");
 }
 
 tap("b-revele", () => {
   const arb = autre(E.t.preneur);
-  tampon(equipe(arb), arb, "Vous arbitrez : vous pouvez voir le mot.", ecranManche);
+  tampon(equipe(arb), arb, "Vous arbitrez toute la manche : le téléphone reste chez vous.", ecranManche);
 });
 
-/* ---------- la manche ---------- */
+/* ============================================================
+   MANCHE - ecran arbitre, deux temps qui alternent.
+   ============================================================ */
 let manche = null;
 
 function ecranManche(){
   const p = E.t.preneur, arb = autre(p);
-  manche = { utilises:0, phase:"indice" };
+  manche = { utilises:0, phase:"indice", prec:null };
   el("s-manche").className = "screen " + classeEq(arb);
-  el("mn-mot").textContent = E.t.mot;
-  el("mn-qui").textContent = donneur(p).emoji + " " + donneur(p).nom + " fait deviner à " +
-                             devineur(p).emoji + " " + devineur(p).nom;
   dessineManche();
   va("s-manche");
 }
 
 function dessineManche(){
-  const c = el("mn-coups");
-  c.innerHTML = "";
-  for (let i = 0; i < 3; i++){
-    const d = document.createElement("div");
-    d.className = "coup" + (i >= E.t.pariRetenu ? " hors" : (i < manche.utilises ? " eteint" : ""));
-    c.appendChild(d);
-  }
+  const p = E.t.preneur;
+  dessineBraises(el("mn-braises"), manche.utilises);
+  el("b-annuler").disabled = !manche.prec;
+  el("mn-mot").textContent = "";                              // le mot ne s'affiche qu'a l'appui
+
+  const t1 = manche.phase === "indice";
+  el("mn-temps").className = "temps " + (t1 ? "t1" : "t2");
+  el("mn-temps").textContent = t1 ? "temps 1 · l'indice" : "temps 2 · la réponse";
+  el("mn-question").textContent = t1
+    ? "L'indice de " + donneur(p).nom + " ?"
+    : "La réponse de " + devineur(p).nom + " ?";
+
+  /* Substitution franche : on remplace les noeuds, aucun fondu. */
   const btns = el("mn-btns");
   btns.innerHTML = "";
-  if (manche.phase === "indice"){
-    el("mn-consigne").textContent = "L'indice est-il valable ?";
-    ajouteBtn(btns, "Indice valide", "clair", () => { manche.phase = "reponse"; dessineManche(); });
-    ajouteBtn(btns, "Refusé — coup perdu", "contour", consomme);
+  if (t1){
+    ajouteBtn(btns, "Valide", "clair", () => {
+      manche.prec = { utilises:manche.utilises, phase:manche.phase };
+      manche.phase = "reponse";
+      dessineManche();
+    });
+    ajouteBtn(btns, "Interdit", "contour", ecranBanni);       // a l'oppose de Valide
   } else {
-    el("mn-consigne").textContent = "La réponse est-elle le mot ?";
-    ajouteBtn(btns, "Trouvé !", "clair", () => resolution(true));
-    ajouteBtn(btns, "Raté", "contour", consomme);
+    ajouteBtn(btns, "Trouvé", "clair", () => resolution("trouve"));
+    ajouteBtn(btns, "Raté", "contour", () => {
+      manche.prec = { utilises:manche.utilises, phase:manche.phase };
+      manche.utilises++;
+      manche.phase = "indice";
+      if (manche.utilises >= E.t.pariRetenu) resolution("quota");
+      else dessineManche();
+    });
   }
 }
 
 function ajouteBtn(parent, texte, style, fn){
   const b = document.createElement("button");
-  b.className = "btn " + style + " grand";
-  if (style === "contour"){ b.style.borderColor = "rgba(255,255,255,.9)"; b.style.color = "#fff"; }
+  b.className = "btn " + style;
   b.textContent = texte;
   tap(b, fn);
   parent.appendChild(b);
 }
 
-function consomme(){
-  manche.utilises++;
-  manche.phase = "indice";
-  if (manche.utilises >= E.t.pariRetenu) resolution(false);
-  else dessineManche();
-}
+tap("b-annuler", () => {
+  if (!manche || !manche.prec) return;
+  manche.utilises = manche.prec.utilises;
+  manche.phase = manche.prec.phase;
+  manche.prec = null;
+  dessineManche();
+});
 
-/* ---------- resolution ---------- */
-function resolution(reussi){
-  E.t.reussi = reussi;
-  const p = E.t.preneur;
-  const gagnant = reussi ? p : autre(p);
+/* « voir le mot » : rendu tant qu'on appuie, retire des qu'on relache. */
+(function boutonVoir(){
+  const b = el("b-voir");
+  const montre = (e) => { e.preventDefault(); if (E.t) el("mn-mot").textContent = E.t.mot; };
+  const cache  = () => { el("mn-mot").textContent = ""; };
+  b.addEventListener("pointerdown", montre);
+  ["pointerup","pointerleave","pointercancel"].forEach((ev) => b.addEventListener(ev, cache));
+  document.addEventListener("pointerup", cache);
+  document.addEventListener("pointercancel", cache);
+  b.addEventListener("click", (e) => e.preventDefault());
+})();
+
+/* ---------- confirmation plein ecran de l'indice banni ---------- */
+function ecranBanni(){
+  const arb = autre(E.t.preneur);
+  el("s-banni").className = "screen " + classeEq(arb);
+  el("bn-txt").textContent = "Indice banni — le tour s'arrête, +" + E.t.valeur + " pour " + court(arb);
+  va("s-banni");
+}
+tap("b-banni-non", () => va("s-manche"));
+tap("b-banni-oui", () => resolution("interdit"));
+
+/* ============================================================
+   RESOLUTION
+   ============================================================ */
+function resolution(issue){
+  const p = E.t.preneur, arb = autre(p);
+  const gagnant = issue === "trouve" ? p : arb;
+
+  E.t.issue = issue;
+  E.t.coupFin = issue === "quota" ? E.t.pariRetenu : manche.utilises + 1;
+  E.t.points = gagnant;
   E.score[gagnant] += E.t.valeur;
 
+  // La rotation de l'equipe preneuse est consommee dans les trois cas.
+  // Celle du donneur vole ne l'est pas : il rechoisira au prochain tour de son equipe.
+  E.rot[p] = 1 - E.rot[p];
+
+  // Rotation du droit d'ouverture : le vol garde la main.
+  E.t.volGardeLaMain = E.t.contre;
+  let prochainOuvreur = E.t.contre ? p : autre(E.t.ouvreur);
+
+  // Exception de fin de partie : elle l'emporte sur la conservation de main.
+  if (!E.finProgrammee && (E.score.lichen >= CIBLE || E.score.braise >= CIBLE)){
+    const franchisseur = E.score.lichen >= CIBLE ? "lichen" : "braise";
+    E.finProgrammee = true;
+    prochainOuvreur = autre(franchisseur);
+    E.t.volGardeLaMain = false;
+  } else if (E.finProgrammee){
+    E.t.finDePartie = true;                                   // ce tour etait le dernier
+  }
+  E.ouvreur = prochainOuvreur;
+
   E.log.push({
-    tour: E.numeroTour, ouvreur: E.t.ouvreur, mot: E.t.mot, valeur: E.t.valeur,
-    pariOuv: E.t.pariOuv, contre: E.t.contre ? "o" : "n", pariRetenu: E.t.pariRetenu,
-    preneur: p, reussi: reussi ? "o" : "n", points: gagnant
+    tour: E.numeroTour,
+    ouvre: court(E.t.ouvreur),
+    donneur: E.t.donneurOuv,
+    mot: E.t.mot,
+    valeur: E.t.valeur,
+    pariOuv: E.t.pariOuv,
+    contre: E.t.contre ? "o" : "n",
+    pariRetenu: E.t.pariRetenu,
+    preneuse: court(p),
+    donneurRetenu: E.t.donneurRetenu,
+    issue: issue === "trouve" ? "trouvé" : (issue === "quota" ? "quota épuisé" : "indice refusé"),
+    coupFin: E.t.coupFin,
+    points: court(gagnant),
+    volMain: E.t.volGardeLaMain ? "o" : "n"
   });
 
   el("s-resultat").className = "screen " + classeEq(gagnant);
-  el("rs-emoji").textContent = reussi ? "🎉" : "💥";
-  el("rs-titre").textContent = reussi
-    ? "Trouvé en " + (manche.utilises + 1) + " coup" + (manche.utilises ? "s" : "") + " !"
-    : "Quota dépassé";
-  el("rs-detail").innerHTML = "« " + E.t.mot + " » · " + E.t.valeur + " points<br>" +
-                              E.t.valeur + " points pour l'" + nomEquipe(gagnant) + " " + emojis(gagnant);
+  el("rs-emoji").textContent = issue === "trouve" ? "🎉" : (issue === "quota" ? "💀" : "🚫");
+  el("rs-titre").textContent = issue === "trouve"
+    ? "Trouvé au coup " + E.t.coupFin
+    : (issue === "quota" ? "Les braises sont mortes" : "Indice banni");
+  el("rs-detail").innerHTML = "« " + E.t.mot + " » · " + E.t.valeur + " points<br>+" +
+    E.t.valeur + " pour " + court(gagnant) + " " + emojis(gagnant) +
+    (E.t.volGardeLaMain ? "<br>le vol garde la main" : "");
   dessineScore(el("rs-score"));
   va("s-resultat");
 }
 
 function dessineScore(cible){
   cible.innerHTML = "";
-  ["A","B"].forEach((t) => {
+  ["lichen","braise"].forEach((t) => {
     const d = document.createElement("div");
-    const c = t === "A" ? "var(--corail)" : "var(--turquoise)";
+    const c = "var(--" + t + ")";
     d.style.borderColor = c;
-    d.innerHTML = '<div class="lbl">' + emojis(t) + '</div>' +
-                  '<div class="pts" style="color:' + c + '">' + E.score[t] + '</div>';
+    d.innerHTML = '<div class="em">' + emojis(t) + '</div>' +
+                  '<div class="pts" style="color:' + c + '">' + E.score[t] + '</div>' +
+                  '<div class="lbl">' + court(t) + '</div>';
     cible.appendChild(d);
   });
 }
 
 tap("b-suivant", () => {
-  // rotation du role de donneur dans chaque equipe, puis du droit d'ouverture
-  E.donneurIdx.A = 1 - E.donneurIdx.A;
-  E.donneurIdx.B = 1 - E.donneurIdx.B;
-  E.ouvreur = autre(E.ouvreur);
-
-  // le cycle se termine toujours : on ne compare qu'au retour du premier ouvreur
-  const seuil = E.score.A >= CIBLE || E.score.B >= CIBLE;
-  if (seuil && E.ouvreur === E.premierOuvreur) finPartie();
+  if (E.t.finDePartie) finPartie();
   else nouveauTour();
 });
 
 function finPartie(){
-  const gagnant = E.score.A === E.score.B ? null : (E.score.A > E.score.B ? "A" : "B");
-  el("s-fin").className = "screen " + (gagnant ? classeEq(gagnant) : "");
-  el("fin-emoji").textContent = gagnant ? emojis(gagnant) : "🤝";
-  el("fin-titre").innerHTML = gagnant ? "L'" + nomEquipe(gagnant) + "<br>gagne" : "Égalité";
+  const g = E.score.lichen === E.score.braise ? null : (E.score.lichen > E.score.braise ? "lichen" : "braise");
+  el("s-fin").className = "screen " + (g ? classeEq(g) : "");
+  el("fin-emoji").textContent = g ? emojis(g) : "🤝";
+  el("fin-titre").innerHTML = g ? long(g) + "<br>l'emportent" : "Égalité";
   dessineScore(el("fin-score"));
   va("s-fin");
 }
 
+tap("b-revanche", () => demarre(E.joueurs.map((j) => j.id)));
+tap("b-accueil", ouvreMiseEnPlace);
+
 /* ============================================================
    ECRAN DE DEBUG
    ============================================================ */
-const ENTETE = ["tour","ouvre","mot","valeur","pari ouv","contre","pari retenu","preneur","reussi","points a"];
+const ENTETE = ["tour","ouvre","donneur","mot","valeur","pari ouv","contré","pari retenu",
+                "preneuse","donneur retenu","issue","coup fin","points à","main par vol"];
 
 function texteLog(){
   const lignes = [ENTETE.join(" | ")];
   E.log.forEach((l) => lignes.push([
-    l.tour, l.ouvreur, l.mot, l.valeur, l.pariOuv, l.contre, l.pariRetenu, l.preneur, l.reussi, l.points
+    l.tour, l.ouvre, l.donneur, l.mot, l.valeur, l.pariOuv, l.contre, l.pariRetenu,
+    l.preneuse, l.donneurRetenu, l.issue, l.coupFin, l.points, l.volMain
   ].join(" | ")));
   return lignes.join("\n");
 }
 
 let retourDebug = "s-accueil";
 
-function ouvreDebug(id){
-  retourDebug = id;
+function ouvreDebug(depuis){
+  retourDebug = depuis;
   el("logbox").textContent = E.log.length ? texteLog() : "Aucun tour joué pour l'instant.";
   const n = E.log.length;
   if (n){
-    const ouvMarque = E.log.filter((l) => l.points === l.ouvreur).length;
-    const contres   = E.log.filter((l) => l.contre === "o").length;
-    const reussis   = E.log.filter((l) => l.reussi === "o").length;
-    const moyPari   = (E.log.reduce((s,l) => s + l.pariRetenu, 0) / n).toFixed(2);
-    el("dbg-stats").textContent = n + (n > 1 ? " tours" : " tour") + " · l'ouvreur marque " + ouvMarque + "/" + n +
-      " · contres " + contres + "/" + n + " · réussites " + reussis + "/" + n + " · pari retenu moyen " + moyPari;
+    const pc = (x) => Math.round(100 * x / n) + "%";
+    const ouvMarque = E.log.filter((l) => l.points === l.ouvre).length;
+    const vols      = E.log.filter((l) => l.contre === "o").length;
+    const pari1     = E.log.filter((l) => l.pariOuv === 1).length;
+    const refus     = E.log.filter((l) => l.issue === "indice refusé").length;
+    const trouves   = E.log.filter((l) => l.issue === "trouvé").length;
+    const moyOuv    = (E.log.reduce((s,l) => s + l.pariOuv, 0) / n).toFixed(2);
+    const moyRet    = (E.log.reduce((s,l) => s + l.pariRetenu, 0) / n).toFixed(2);
+    el("dbg-stats").textContent =
+      n + (n > 1 ? " tours" : " tour") +
+      " · l'ouvreur marque " + pc(ouvMarque) +
+      " · vols " + pc(vols) +
+      " · verrou à 1 " + pc(pari1) +
+      " · indices refusés " + pc(refus) +
+      " · trouvés " + pc(trouves) +
+      " · pari ouv. moyen " + moyOuv + " / retenu " + moyRet;
   } else el("dbg-stats").textContent = "—";
   el("s-debug").className = "screen";
   va("s-debug");
@@ -767,34 +1106,20 @@ function copieSecours(t, fini){
 }
 
 /* ============================================================
-   BOUTONS GLOBAUX
+   OUVERTURE - une partie precedente propose l'ecran de confirmation.
    ============================================================ */
-tap("b-nouvelle", () => { choix = []; construitGrille(); el("s-avatars").className = "screen"; va("s-avatars"); });
-tap("b-av-reset", () => { choix = []; construitGrille(); });
-tap("b-tirage", nouveauTour);
-tap("b-revanche", () => demarre(E.joueurs.map((j) => j.id)));
-tap("b-accueil", () => { preparerAccueil(); va("s-accueil"); });
-
-let equipeSauvee = null;
-
-function preparerAccueil(){
+function ouvreDepuisSauvegarde(){
   let sauve = null;
   try { sauve = JSON.parse(localStorage.getItem(CLE_LS) || "null"); } catch(e){}
   const ok = Array.isArray(sauve) && sauve.length === 4 &&
              sauve.every((id) => AVATARS.some((a) => a.id === id)) &&
              new Set(sauve).size === 4;
-  const b = el("b-rejouer");
-  if (ok){
-    equipeSauvee = sauve;
-    b.textContent = "Rejouer " + sauve.map((id) => AVATARS.find((a) => a.id === id).emoji).join("");
-    b.style.display = "";
-  } else {
-    equipeSauvee = null;
-    b.style.display = "none";
-  }
+  if (!ok) return false;
+  ecranConfirm(sauve, false);
+  return true;
 }
-tap("b-rejouer", () => { if (equipeSauvee) demarre(equipeSauvee.slice()); });
-preparerAccueil();
+
+if (!ouvreDepuisSauvegarde()) va("s-accueil");
 
 /* ============================================================
    GARDE-FOUS TACTILES
@@ -804,7 +1129,7 @@ document.addEventListener("dblclick", (e) => e.preventDefault());
 let dernierTouch = 0;
 document.addEventListener("touchend", (e) => {
   const t = Date.now();
-  if (t - dernierTouch < 320) e.preventDefault();      // double-tap zoom iOS
+  if (t - dernierTouch < 320) e.preventDefault();               // double-tap zoom iOS
   dernierTouch = t;
 }, { passive:false });
 document.addEventListener("touchmove", (e) => {
@@ -821,21 +1146,23 @@ document.addEventListener("contextmenu", (e) => e.preventDefault());
     const c = document.createElement("canvas");
     c.width = c.height = 512;
     const x = c.getContext("2d");
-    x.fillStyle = "#FF4D3D"; x.fillRect(0, 0, 512, 512);
-    x.fillStyle = "#F6EFE1";
+    x.fillStyle = "#F4E9D2"; x.fillRect(0, 0, 512, 512);
+    x.fillStyle = "#3FA083";
+    x.beginPath(); x.arc(256, 256, 236, 0, Math.PI * 2); x.fill();
+    x.fillStyle = "#FFF8E7";
     x.textAlign = "center"; x.textBaseline = "middle";
-    x.font = "160px serif";
-    x.fillText("🦊", 256, 180);
-    x.font = "900 130px 'Arial Rounded MT Bold', Verdana, sans-serif";
-    x.fillText("Cowo", 256, 360);
+    x.font = "150px serif";
+    x.fillText("🍄", 256, 190);
+    x.font = "900 120px 'Arial Rounded MT Bold', Verdana, sans-serif";
+    x.fillText("Kowo", 256, 350);
     icone = c.toDataURL("image/png");
   } catch(e){}
   const base = location.href.split("#")[0];
   const m = {
-    name: "Cowo", short_name: "Cowo",
+    name: "Kowo", short_name: "Kowo",
     start_url: base, scope: base,
     display: "fullscreen", orientation: "portrait",
-    background_color: "#F6EFE1", theme_color: "#FF4D3D",
+    background_color: "#F4E9D2", theme_color: "#3FA083",
     icons: icone ? [
       { src: icone, sizes: "512x512", type: "image/png", purpose: "any" },
       { src: icone, sizes: "512x512", type: "image/png", purpose: "maskable" }
