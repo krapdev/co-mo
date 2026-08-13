@@ -11,6 +11,7 @@
 <!-- ==========================================================================
      KOWO - prototype jouable, un seul fichier, hors-ligne.
      4 joueurs, 2 equipes de 2, un seul telephone qui circule. Portrait.
+     Specification v6 : moins de taps, moins de passages, score toujours visible.
      ========================================================================== -->
 
 <script>
@@ -85,6 +86,7 @@ const AVATARS = [
   --braise:#d8511f;  --braise-encre:#fdf3de;  --braise-fond:#8f3410;
   --bg:var(--parch);
   --ink:var(--sombre);
+  --bandeau-h:64px;
 }
 
 html,body{margin:0;padding:0;overscroll-behavior:none;height:100%}
@@ -136,6 +138,32 @@ button{font-family:var(--font)}
   padding-top:max(22px,env(safe-area-inset-top));
   padding-bottom:max(20px,env(safe-area-inset-bottom));
 }
+/* Le bandeau est hors du flux : il ne deplace jamais le contenu d'un ecran a
+   l'autre. La surface se contente de lui reserver sa hauteur. */
+.surface.avec-bandeau{padding-top:calc(var(--bandeau-h) + 10px)}
+
+/* ============================================================
+   BANDEAU DE SCORE - permanent sur les ecrans de jeu.
+   Absent du tampon, du tirage et de la fin : la pleine couleur y est
+   le signal, un bandeau bicolore le casserait.
+   ============================================================ */
+#bandeau{
+  position:absolute;top:0;left:0;right:0;height:var(--bandeau-h);
+  display:none;z-index:2;
+  padding-top:env(safe-area-inset-top);
+  box-shadow:0 3px 0 rgba(28,18,6,.22);
+}
+#bandeau.on{display:flex}
+#bandeau .moitie{
+  flex:1;display:flex;align-items:center;gap:10px;padding:0 14px;
+  color:#fff;
+}
+#bandeau .lichen{background:var(--lichen);justify-content:flex-start}
+#bandeau .braise{background:var(--braise);justify-content:flex-end}
+#bandeau .av{font-size:32px;line-height:1;letter-spacing:-2px}
+#bandeau .pts{font-weight:800;font-size:40px;line-height:1}
+#bandeau .pts.chaud{text-shadow:0 0 0 #fff}
+#bandeau .feu{font-size:22px;line-height:1}
 
 /* ============================================================
    ECRANS
@@ -160,16 +188,13 @@ button{font-family:var(--font)}
 .kicker{font-weight:700;font-size:14px;letter-spacing:.2em;text-transform:uppercase;opacity:.78}
 .geant{font-size:110px;line-height:1}
 .avatar-xl{font-size:132px;line-height:1}
-.avatar-md{font-size:46px;line-height:1}
 .titre-eq{font-weight:800;font-size:38px;line-height:1.02;margin-top:6px;transform:rotate(-1.4deg)}
 .sous{font-weight:700;font-size:25px;line-height:1.15;margin-top:2px;opacity:.92}
-.pastille{font-weight:800;font-size:26px;padding:6px 20px;border-radius:99px;
-  background:rgba(255,250,235,.9);color:var(--sombre)}
 
 /* ============================================================
    BOUTONS
    Une seule forme : une face posee sur un socle plein, qui s'y
-   enfonce au doigt.
+   enfonce au doigt. Rien ne descend sous 44px de zone tactile.
    ============================================================ */
 .btn{
   border:none;border-radius:18px;cursor:pointer;
@@ -186,6 +211,13 @@ button{font-family:var(--font)}
 .btn.clair{--face:rgba(255,250,235,.95);--label:var(--sombre);--socle:rgba(28,18,6,.3);--socle-h:6px}
 .btn.sombre{--face:var(--sombre);--label:#f7edd4;--socle:rgba(28,18,6,.4);--socle-h:6px}
 .btn.grand{min-height:74px;border-radius:20px;font-size:25px}
+
+/* Rangee de boutons en pied d'ecran : pleine largeur de colonne, ~110px. */
+.pied{display:flex;gap:9px;height:110px;flex:none}
+.pied .btn{flex:1;min-height:0;height:100%;border-radius:20px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0 6px}
+.pied .chiffre{font-weight:800;font-size:44px;line-height:1}
+.pied .label{font-weight:700;font-size:14px;line-height:1.15;opacity:.85;text-align:center}
 
 /* ============================================================
    MISE EN PLACE
@@ -221,75 +253,71 @@ button{font-family:var(--font)}
 .eq-braise{background:var(--braise);color:var(--braise-encre);box-shadow:0 7px 0 var(--braise-fond)}
 
 /* ============================================================
-   TIRAGE / TAMPON / REVELATION
+   TIRAGE / TAMPONS
    ============================================================ */
 .titre-sort{font-weight:800;font-size:46px;line-height:1.02;transform:rotate(-1.5deg);padding:0 4px}
 .tp-titre{font-weight:800;font-size:34px;line-height:1.06;padding:0 6px;transform:rotate(-1deg)}
 .tp-sous{font-weight:700;font-size:19px;line-height:1.28;opacity:.9;padding:0 10px}
 .btn.serment{min-height:96px;border-radius:22px;font-size:22px;line-height:1.2;padding:12px 16px}
-.rv-mot{font-weight:800;font-size:54px;line-height:1.02;padding:0 4px;transform:rotate(-1deg)}
-.rv-note{font-weight:700;font-size:18px;line-height:1.3;opacity:.9;padding:14px 12px 0}
+.tv-avatars{font-size:96px;line-height:1;letter-spacing:-6px}
 
 /* ============================================================
-   CHOIX DU MOT / PARIS
+   CHOIX DU MOT ET PARI - un seul ecran, deux taps.
    ============================================================ */
-.mots{flex:1;display:flex;flex-direction:column;gap:9px}
+.ch-qui{text-align:center;font-weight:700;font-size:17px;line-height:1.2;opacity:.75}
+.mots{flex:1;display:flex;flex-direction:column;gap:8px}
 .mots .btn{flex:1;border-radius:20px;display:flex;align-items:center;justify-content:space-between;
-  padding:0 18px;--socle:rgba(61,43,22,.22)}
-.mots .m{font-weight:800;font-size:30px}
-.mots .v{font-weight:800;font-size:20px;padding:5px 13px;border-radius:99px}
+  padding:0 16px;--socle:rgba(61,43,22,.22)}
+.mots .m{font-weight:800;font-size:29px}
+.mots .v{font-weight:800;font-size:19px;padding:5px 12px;border-radius:99px}
+.mots .btn.attenue{opacity:.32}
+.mots .btn.sel{--face:#fff;--socle:var(--or);--socle-h:7px;outline:3px solid var(--or);outline-offset:-3px}
 .v10{background:var(--menthe);color:var(--sombre)}
 .v20{background:var(--or);color:var(--sombre)}
 .v30{background:var(--braise);color:var(--braise-encre)}
-.ch-titre{font-weight:800;font-size:27px;line-height:1.1;margin-top:2px}
-
-.paris{flex:1;display:flex;flex-direction:column;gap:10px}
-.paris .btn{flex:1;border-radius:22px;display:flex;align-items:center;justify-content:center;
-  gap:16px;--socle:rgba(28,18,6,.28);--socle-h:6px}
-.paris .chiffre{font-weight:800;font-size:76px;line-height:1}
-.paris .label{font-weight:800;font-size:22px;opacity:.85}
-.paris.vol .chiffre{font-size:56px}
-.paris.vol .label{font-size:19px;opacity:1}
-.paris .btn:disabled{--face:rgba(255,250,235,.35);opacity:.45}
-.pa-mot{font-weight:800;font-size:40px;line-height:1.05;margin-top:2px}
-.pa-mot .val{font-size:22px;opacity:.6}
-.pa-q{font-weight:800;font-size:25px;line-height:1.1;margin-top:6px}
-.co-chiffre{font-weight:800;font-size:96px;line-height:.95}
-.co-mot{font-weight:800;font-size:30px;line-height:1.06;margin-top:2px}
-.co-note{font-weight:700;font-size:17px;line-height:1.25;opacity:.88;margin-top:4px}
 
 /* ============================================================
-   ARBITRAGE
+   CONTRE - ecran de memorisation. Le mot domine, les boutons se tassent.
    ============================================================ */
-.barre{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.co-mot{font-weight:800;font-size:72px;line-height:1.02;padding:0 4px;word-break:break-word}
+.co-val{font-weight:800;font-size:32px;line-height:1;margin-top:6px;opacity:.92}
+.co-memo{font-weight:700;font-size:21px;line-height:1.3;margin-top:22px}
+.co-pari{font-weight:800;font-size:28px;line-height:1.2;margin-top:18px;opacity:.95}
+
+/* ============================================================
+   ARBITRAGE - une seule question, deux boutons, ecran stable.
+   ============================================================ */
+.barre{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:none}
 .braises{display:flex;gap:7px;align-items:center}
-.braises i{width:30px;height:30px;border-radius:50%;background:rgba(61,43,22,.14);
+.braises i{width:28px;height:28px;border-radius:50%;background:rgba(61,43,22,.14);
   box-shadow:inset 0 2px 4px rgba(61,43,22,.25)}
 .braises i.vive{background:var(--braise-vive);
   box-shadow:0 0 0 4px rgba(232,100,31,.22),0 3px 8px rgba(160,60,10,.4)}
-.mini-btn{min-height:44px;padding:0 14px;border-radius:14px;font-weight:700;font-size:16px;
+.barre-droite{display:flex;gap:8px;align-items:center}
+.mini-btn{min-height:44px;padding:0 14px;border-radius:14px;font-weight:700;font-size:15px;
   box-shadow:none;--face:rgba(61,43,22,.1);--label:var(--sombre)}
-.mini-btn:active:not(:disabled){transform:none;box-shadow:none}
-.mini-btn:disabled{opacity:.35}
-.scores{display:flex;justify-content:space-between;font-weight:700;font-size:15px;opacity:.7}
-.ar-corps{flex:1;display:flex;flex-direction:column;gap:10px}
-.carte-temps{border-radius:22px;padding:16px 14px;text-align:center}
-.carte-temps.indice{background:var(--or);color:var(--sombre);box-shadow:0 6px 0 rgba(61,43,22,.22)}
-.carte-temps.reponse{background:var(--menthe);color:#1b3f38;box-shadow:0 6px 0 rgba(27,63,56,.22)}
-.ar-titre{font-weight:800;font-size:34px;line-height:1.06;margin-top:4px}
-.ar-hint{font-weight:700;font-size:14px;line-height:1.3;margin-top:6px;opacity:.8}
-#b-voir{--face:rgba(61,43,22,.1);--label:var(--sombre);box-shadow:none;min-height:56px}
-#b-voir:active{transform:none;box-shadow:none}
-.duo-actions{display:flex;gap:10px;height:190px}
-.duo-actions .btn{border-radius:22px;--socle-h:7px}
-#b-oui{flex:1.35}
-#b-non{flex:1}
-.duo-actions.indice #b-oui{--face:var(--lichen);--label:var(--lichen-encre);--socle:var(--lichen-fond);font-size:34px}
-.duo-actions.indice #b-non{--face:var(--creme);--label:var(--braise-fond);--socle:rgba(143,52,16,.25);
-  font-size:27px;border:3px solid var(--braise)}
-.duo-actions.reponse #b-oui{--face:var(--sombre);--label:#ffeec2;--socle:rgba(28,18,6,.45);font-size:36px}
-.duo-actions.reponse #b-non{--face:var(--creme);--label:var(--sombre);--socle:rgba(61,43,22,.2);
-  font-size:30px;border:3px solid rgba(61,43,22,.35)}
+.mini-btn:active:not(:disabled){transform:none;box-shadow:none;filter:brightness(.94)}
+.mini-btn:disabled{opacity:.3}
+#b-oeil{min-width:56px;font-size:22px}
+
+/* Le rappel des interdits EST le bouton de bannissement : cadre parchemin,
+   pas un bouton colore. On le lit quand on hesite, on le tape quand on tranche. */
+.rappel{
+  flex:none;border:2px dashed rgba(61,43,22,.4);border-radius:16px;
+  background:rgba(255,250,235,.55);color:var(--sombre);
+  font-family:var(--font);font-weight:700;font-size:14px;line-height:1.3;
+  padding:10px 12px;text-align:left;cursor:pointer;min-height:44px;
+}
+.rappel:active{filter:brightness(.95)}
+
+.ar-question{font-weight:800;font-size:44px;line-height:1.05;padding:0 6px}
+.ar-mot{display:none}
+.ar-mot.on{display:block;font-weight:800;font-size:60px;line-height:1.05;padding:0 6px}
+.ar-mot.on + .ar-question{display:none}
+.duo-actions{display:flex;gap:10px;height:33%;flex:none}
+.duo-actions .btn{flex:1;border-radius:22px;--socle-h:7px;font-size:32px}
+#b-trouve{--face:var(--sombre);--label:#ffeec2;--socle:rgba(28,18,6,.45)}
+#b-rate{--face:var(--creme);--label:var(--sombre);--socle:rgba(61,43,22,.2);border:3px solid rgba(61,43,22,.35)}
 
 /* ============================================================
    BANNI / RESULTAT / FIN
@@ -299,13 +327,7 @@ button{font-family:var(--font)}
 .re-emoji{font-size:104px;line-height:1}
 .re-ligne{font-weight:800;font-size:38px;line-height:1.04;padding:0 6px;transform:rotate(-1deg)}
 .re-points{font-weight:800;font-size:76px;line-height:1;margin-top:2px}
-.re-scores{display:flex;gap:10px;margin-top:14px}
-.re-scores div{padding:10px 18px;border-radius:18px;background:rgba(255,250,235,.9)}
-.re-scores .l{font-weight:700;font-size:14px}
-.re-scores .s{font-weight:800;font-size:34px;line-height:1}
-.re-scores .lichen{color:var(--lichen-fond)}
-.re-scores .braise{color:var(--braise-fond)}
-.re-suite{font-weight:700;font-size:17px;line-height:1.3;opacity:.9;margin-top:14px;padding:0 6px}
+.re-suite{font-weight:700;font-size:17px;line-height:1.3;opacity:.9;margin-top:16px;padding:0 6px}
 .fin-titre{font-weight:800;font-size:34px;line-height:1.04;transform:rotate(-1.4deg)}
 .fin-cartes{flex:1;display:flex;flex-direction:column;gap:10px;margin-top:4px}
 .fin-cartes .carte-eq{gap:0}
@@ -315,9 +337,12 @@ button{font-family:var(--font)}
 /* ============================================================
    LOG
    ============================================================ */
+/* Le bouton du log ne s'affiche qu'entre les temps forts : sur les ecrans de
+   verdict, de pari ou de vol, il chevaucherait une zone tactile decisive. */
 #debug-open{position:absolute;right:6px;bottom:4px;width:44px;height:44px;border:none;
   border-radius:50%;background:transparent;color:var(--ink);opacity:.32;
-  font-weight:700;font-size:13px;cursor:pointer}
+  font-weight:700;font-size:13px;cursor:pointer;z-index:3;display:none}
+#debug-open.on{display:block}
 .log-tete{display:flex;align-items:center;justify-content:space-between}
 .log-tete .t{font-weight:800;font-size:24px}
 .log-liste{flex:1;overflow:auto;display:flex;flex-direction:column;gap:6px;padding-right:2px;
@@ -331,7 +356,21 @@ button{font-family:var(--font)}
   <div class="grain"></div>
   <div class="sheen"></div>
 
-  <div class="surface">
+  <!-- ================= BANDEAU DE SCORE ================= -->
+  <div id="bandeau">
+    <div class="moitie lichen">
+      <span class="av" id="bd-av-lichen"></span>
+      <span class="pts" id="bd-pts-lichen">0</span>
+      <span class="feu" id="bd-feu-lichen"></span>
+    </div>
+    <div class="moitie braise">
+      <span class="feu" id="bd-feu-braise"></span>
+      <span class="pts" id="bd-pts-braise">0</span>
+      <span class="av" id="bd-av-braise"></span>
+    </div>
+  </div>
+
+  <div class="surface" id="surface">
 
     <!-- ================= MISE EN PLACE ================= -->
     <div class="screen" id="s-grille">
@@ -365,80 +404,73 @@ button{font-family:var(--font)}
       <button class="btn clair grand" id="b-ouvrir" style="margin-top:26px;width:100%;min-height:72px">Ouvrir le tour</button>
     </div>
 
-    <!-- ================= TAMPON - piece critique ================= -->
+    <!-- ================= CHOIX DU MOT ET PARI - un seul ecran ================= -->
+    <div class="screen" id="s-choix">
+      <div class="ch-qui" id="ch-qui"></div>
+      <div class="mots" id="ch-mots"></div>
+      <div class="pied" id="ch-paris">
+        <button class="btn" id="b-pari-1">
+          <span class="chiffre">1</span><span class="label">coup<br>involable</span>
+        </button>
+        <button class="btn" id="b-pari-2">
+          <span class="chiffre">2</span><span class="label">coups</span>
+        </button>
+        <button class="btn" id="b-pari-3">
+          <span class="chiffre">3</span><span class="label">coups</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ================= TAMPON D'OUVERTURE - individuel, avec serment ================= -->
     <div class="screen" id="s-tampon">
       <div class="grow centre">
         <div class="avatar-xl" id="tp-emoji"></div>
         <div class="tp-titre" id="tp-titre"></div>
-        <div class="tp-sous" id="tp-sous"></div>
       </div>
       <button class="btn clair serment" id="b-serment"></button>
     </div>
 
-    <!-- ================= CHOIX DU MOT ================= -->
-    <div class="screen" id="s-choix">
-      <div class="tete">
-        <div class="avatar-md" id="ch-emoji"></div>
-        <div class="ch-titre" id="ch-titre"></div>
-        <div class="kicker" style="font-size:15px;letter-spacing:.1em;opacity:.65">cinq mots, un seul</div>
-      </div>
-      <div class="mots" id="ch-mots"></div>
-    </div>
-
-    <!-- ================= PARI D'OUVERTURE ================= -->
-    <div class="screen" id="s-pari">
-      <div class="tete">
-        <div class="kicker" id="pa-donneur" style="font-size:15px;letter-spacing:.16em;opacity:.7"></div>
-        <div class="pa-mot" id="pa-mot"></div>
-        <div class="pa-q">En combien de coups ?</div>
-      </div>
-      <div class="paris" id="pa-liste"></div>
-    </div>
-
-    <!-- ================= CONTRE ================= -->
+    <!-- ================= CONTRE - ecran de memorisation ================= -->
     <div class="screen" id="s-contre">
-      <div class="tete">
-        <div class="kicker" id="co-kicker" style="font-size:15px;letter-spacing:.14em;opacity:.85"></div>
-        <div class="co-chiffre" id="co-pari"></div>
+      <div class="grow centre">
         <div class="co-mot" id="co-mot"></div>
-        <div class="co-note" id="co-note"></div>
+        <div class="co-val" id="co-val"></div>
+        <div class="co-memo">Mémorise-le.<br>Tu ne le reverras plus.</div>
+        <div class="co-pari" id="co-pari"></div>
       </div>
-      <div class="paris vol" id="co-liste"></div>
-      <button class="btn plat grand" id="b-laisser">Laisser la main</button>
+      <div class="pied" id="co-actions">
+        <button class="btn" id="b-laisser"><span class="label" style="font-size:20px">Laisser</span></button>
+        <button class="btn" id="b-voler-2"><span class="chiffre">2</span><span class="label">voler</span></button>
+        <button class="btn" id="b-voler-1"><span class="chiffre">1</span><span class="label">voler</span></button>
+      </div>
     </div>
 
-    <!-- ================= REVELATION DU MOT ================= -->
-    <div class="screen" id="s-revele">
+    <!-- ================= TAMPON DE VOL - collectif, sans serment ================= -->
+    <div class="screen" id="s-tampon-vol">
       <div class="grow centre">
-        <div class="kicker" style="font-size:16px;letter-spacing:.18em">le mot à faire deviner</div>
-        <div class="rv-mot" id="rv-mot"></div>
-        <div class="pastille" id="rv-val"></div>
-        <div class="rv-note" id="rv-note"></div>
+        <div class="tv-avatars" id="tv-avatars"></div>
+        <div class="tp-titre" id="tv-titre"></div>
       </div>
-      <button class="btn clair" id="b-memorise" style="min-height:80px;border-radius:22px;font-size:24px">Mot mémorisé</button>
+      <button class="btn clair serment" id="b-nous-arbitrons">Nous arbitrons</button>
     </div>
 
     <!-- ================= ARBITRAGE ================= -->
     <div class="screen" id="s-arbitre" style="gap:9px">
       <div class="barre">
         <div class="braises" id="ar-braises"></div>
-        <button class="btn mini-btn" id="b-annuler">↩ annuler</button>
-      </div>
-      <div class="scores">
-        <span id="ar-preneur"></span><span id="ar-arbitre"></span>
-      </div>
-      <div class="ar-corps">
-        <div class="carte-temps" id="ar-carte">
-          <div class="kicker" id="ar-kicker" style="font-size:14px"></div>
-          <div class="ar-titre" id="ar-titre"></div>
-          <div class="ar-hint" id="ar-hint"></div>
+        <div class="barre-droite">
+          <button class="btn mini-btn" id="b-annuler">annuler</button>
+          <button class="btn mini-btn" id="b-oeil" aria-label="voir le mot">👁</button>
         </div>
-        <button class="btn" id="b-voir"></button>
-        <div class="grow"></div>
-        <div class="duo-actions" id="ar-duo">
-          <button class="btn" id="b-oui"></button>
-          <button class="btn" id="b-non"></button>
-        </div>
+      </div>
+      <button class="rappel" id="b-bannir">⛔ banni — le mot, sa famille, plus d'un mot, les gestes</button>
+      <div class="grow centre">
+        <div class="ar-mot" id="ar-mot"></div>
+        <div class="ar-question" id="ar-question"></div>
+      </div>
+      <div class="duo-actions">
+        <button class="btn" id="b-trouve">TROUVÉ</button>
+        <button class="btn" id="b-rate">RATÉ</button>
       </div>
     </div>
 
@@ -460,10 +492,6 @@ button{font-family:var(--font)}
         <div class="kicker" style="font-size:16px" id="re-issue"></div>
         <div class="re-ligne" id="re-ligne"></div>
         <div class="re-points" id="re-points"></div>
-        <div class="re-scores">
-          <div><div class="l lichen">les Fougères</div><div class="s lichen" id="re-sc-lichen">0</div></div>
-          <div><div class="l braise">les Cendres</div><div class="s braise" id="re-sc-braise">0</div></div>
-        </div>
         <div class="re-suite" id="re-suite"></div>
       </div>
       <button class="btn clair" id="b-suite" style="min-height:80px;border-radius:22px;font-size:26px"></button>
@@ -529,15 +557,22 @@ const avatar = (id) => AVATARS.find((a) => a.id === id) || { nom:"?", emoji:"❓
    ============================================================ */
 const long    = (t) => EQUIPES[t].long;
 const court   = (t) => EQUIPES[t].court;
-const sansArt = (t) => EQUIPES[t].court.replace(/^les\s+/i, "");   // « Fougères »
+const sansArt = (t) => EQUIPES[t].court.replace(/^les\s+/i, "");
 const autre   = (t) => (t === "lichen" ? "braise" : "lichen");
 
 /* ============================================================
    ECRANS
-   Chaque ecran peut teinter l'appareil aux couleurs d'une equipe.
+   Le bandeau de score accompagne les ecrans de jeu. Il disparait sur le
+   tampon, le tirage et la fin : la pleine couleur y porte le message.
    ============================================================ */
-const ECRANS = ["s-grille","s-confirm","s-tirage","s-tampon","s-choix","s-pari",
-                "s-contre","s-revele","s-arbitre","s-banni","s-resultat","s-fin","s-debug"];
+const ECRANS = ["s-grille","s-confirm","s-tirage","s-choix","s-tampon","s-contre",
+                "s-tampon-vol","s-arbitre","s-banni","s-resultat","s-fin","s-debug"];
+
+const AVEC_BANDEAU = ["s-choix","s-contre","s-arbitre","s-banni","s-resultat"];
+
+/* Le log reste joignable entre les tours, jamais par-dessus un bouton
+   qui tranche : le pied de ces ecrans-la n'est qu'un « continuer ». */
+const AVEC_LOG = ["s-grille","s-confirm","s-tirage","s-resultat","s-fin"];
 
 let ecranCourant = "s-grille";
 let retourLog = null;
@@ -546,7 +581,22 @@ function va(id, teinte){
   ecranCourant = id;
   ECRANS.forEach((e) => el(e).classList.toggle("on", e === id));
   el("app").className = teinte ? "t-" + teinte : "";
+  const bandeau = AVEC_BANDEAU.indexOf(id) >= 0 && E.equipes;
+  el("bandeau").classList.toggle("on", !!bandeau);
+  el("surface").classList.toggle("avec-bandeau", !!bandeau);
+  el("debug-open").classList.toggle("on", AVEC_LOG.indexOf(id) >= 0 || id === "s-debug");
+  if (bandeau) dessineBandeau();
   verrouille();
+}
+
+/* Le bandeau n'affiche que le score acquis : jamais les points en jeu,
+   qui trahiraient la valeur du mot au devineur. */
+function dessineBandeau(){
+  ["lichen","braise"].forEach((t) => {
+    el("bd-av-" + t).textContent  = E.equipes[t].map((id) => avatar(id).emoji).join("");
+    el("bd-pts-" + t).textContent = E.score[t];
+    el("bd-feu-" + t).textContent = E.score[t] >= CIBLE ? "🔥" : "";
+  });
 }
 
 /* ============================================================
@@ -554,28 +604,28 @@ function va(id, teinte){
    ============================================================ */
 const E = {
   choix: [],                       // ids des avatars, dans l'ordre : 0-1 lichen, 2-3 braise
-  reprise: false,                  // equipes rechargees depuis la sauvegarde
-  equipes: null,                   // { lichen:[id,id], braise:[id,id] }
+  reprise: false,
+  equipes: null,
   rot: { lichen:0, braise:0 },     // curseur de donneur, par equipe
   score: { lichen:0, braise:0 },
-  reserve: null,                   // mots encore disponibles, par palier
+  reserve: null,
   ouvreur: null,
   t: null,                         // tour en cours
   log: [],
-  finProgrammee: null,             // equipe ayant franchi la cible : dernier tour en cours
+  finProgrammee: null,
   finie: false,
   resultat: null,
   tampon: null,
-  phase: "indice",
+  tamponTeinte: null,
   braises: 0,
   coup: 1,
-  annulable: null,
+  annulable: false,
   propositions: [],
-  motVisible: false
+  motChoisi: null
 };
 
-const joueur   = (t, i) => E.equipes[t][i];
-const donneur  = (t) => joueur(t, E.rot[t]);
+const joueur  = (t, i) => E.equipes[t][i];
+const donneur = (t) => joueur(t, E.rot[t]);
 
 /* ============================================================
    MISE EN PLACE - une seule grille, quatre etapes explicites.
@@ -588,7 +638,6 @@ function dessineMiseEnPlace(){
   el("mp-equipe").textContent   = long(enCours);
   el("mp-champion").textContent = "champion " + ((E.choix.length % 2) + 1) + " sur 2";
 
-  /* Bande de recapitulatif : les avatars deja pris, aux couleurs de leur equipe. */
   const rec = el("mp-recap");
   rec.innerHTML = "";
   if (!E.choix.length){
@@ -607,13 +656,11 @@ function dessineMiseEnPlace(){
     rec.appendChild(d);
   });
 
-  /* Qui parlera en premier : l'info utile au moment ou on la donne. */
   const p = el("mp-premier");
   if (E.choix.length >= 3)      p.textContent = avatar(E.choix[2]).nom + " parlera en premier pour " + long("braise");
   else if (E.choix.length >= 1) p.textContent = avatar(E.choix[0]).nom + " parlera en premier pour " + long("lichen");
   else                          p.textContent = "";
 
-  /* Grille de 8 : un tap suffit, l'avatar pris se grise definitivement. */
   const g = el("mp-grid");
   g.innerHTML = "";
   AVATARS.forEach((a) => {
@@ -654,9 +701,9 @@ function reculeMiseEnPlace(){
    CONFIRMATION DES EQUIPES
    ============================================================ */
 function dessineConfirmation(){
-  el("cf-titre").textContent      = E.reprise ? "Reprendre les mêmes équipes ?" : "Voilà les équipes";
-  el("b-commencer").textContent   = E.reprise ? "Reprendre les mêmes équipes"   : "Que la partie commence";
-  el("b-changer").textContent     = E.reprise ? "Changer" : "Retour";
+  el("cf-titre").textContent    = E.reprise ? "Reprendre les mêmes équipes ?" : "Voilà les équipes";
+  el("b-commencer").textContent = E.reprise ? "Reprendre les mêmes équipes"   : "Que la partie commence";
+  el("b-changer").textContent   = E.reprise ? "Changer" : "Retour";
 
   [["cf-lichen", 0], ["cf-braise", 2]].forEach(([id, i]) => {
     const c = el(id);
@@ -699,21 +746,6 @@ function commence(){
 }
 
 /* ============================================================
-   TAMPON - le telephone change de mains, le nouveau porteur jure.
-   Tout le jeu repose sur cet ecran.
-   ============================================================ */
-function passeLeTelephone(teinte, avatarId, titre, sous, serment, suite){
-  E.tampon = suite;
-  E.tamponTeinte = teinte;
-  E.motVisible = false;
-  el("tp-emoji").textContent = avatar(avatarId).emoji;
-  el("tp-titre").textContent = titre;
-  el("tp-sous").textContent  = sous;
-  el("b-serment").textContent = serment;
-  va("s-tampon", teinte);
-}
-
-/* ============================================================
    TIRAGE DES 5 MOTS
    Sans remise sur toute la partie : seul le mot joue quitte la reserve.
    ============================================================ */
@@ -730,113 +762,93 @@ function tireLaMain(){
 }
 
 /* ============================================================
-   LE TOUR
+   1. CHOIX DU MOT ET PARI - un seul ecran, deux taps.
+   Le tour s'ouvre ici : a ce moment rien n'est encore secret, le
+   telephone circule sans ceremonie jusqu'au donneur d'ouverture.
    ============================================================ */
 function ouvreLeTour(){
   const op = E.ouvreur;
-  const d  = donneur(op);
-  const a  = avatar(d);
-
-  E.t = { ouvreur: op, donneurOuv: d };
+  E.t = { ouvreur: op, donneurOuv: donneur(op), bans: 0, coupBan: null };
   E.propositions = tireLaMain();
-
-  passeLeTelephone(op, d,
-    "Passe le téléphone à " + a.nom,
-    a.nom + " choisit le mot pour " + court(op) + ".",
-    "Je suis " + a.nom + ", je jure de ne rien avoir vu",
-    dessineChoix);
+  E.motChoisi = null;
+  dessineChoix();
 }
 
 function dessineChoix(){
   const a = avatar(E.t.donneurOuv);
-  el("ch-emoji").textContent = a.emoji;
-  el("ch-titre").textContent = a.nom + " choisit le mot";
+  el("ch-qui").textContent = a.emoji + "  à " + a.nom + " de choisir le mot, puis de parier";
 
   const box = el("ch-mots");
   box.innerHTML = "";
-  E.propositions.forEach((w) => {
+  E.propositions.forEach((w, i) => {
     const b = document.createElement("button");
     b.className = "btn";
     b.innerHTML = '<span class="m"></span><span class="v v' + w.v + '"></span>';
     b.querySelector(".m").textContent = w.m;
     b.querySelector(".v").textContent = w.v;
-    tap(b, () => { E.t.mot = w.m; E.t.val = w.v; dessinePari(); });
+    tap(b, () => { E.motChoisi = i; majChoix(); });
     box.appendChild(b);
   });
 
+  majChoix();
   va("s-choix", null);
 }
 
-/* Les trois paris d'ouverture. Un pari a 1 coup ne peut pas etre sous-enchere. */
-const PARIS = [
-  { n:1, label:"coup — involable", face:"var(--sombre)", label_c:"#ffeec2" },
-  { n:2, label:"2 coups",          face:"var(--or)",     label_c:"var(--sombre)" },
-  { n:3, label:"3 coups",          face:"var(--creme)",  label_c:"var(--sombre)" }
-];
-
-function dessinePari(){
-  el("pa-donneur").textContent = avatar(E.t.donneurOuv).nom + " annonce";
-  el("pa-mot").innerHTML = '<span class="mot"></span> <span class="val"></span>';
-  el("pa-mot").querySelector(".mot").textContent = E.t.mot;
-  el("pa-mot").querySelector(".val").textContent = E.t.val;
-
-  const box = el("pa-liste");
-  box.innerHTML = "";
-  PARIS.forEach((p) => {
-    const b = document.createElement("button");
-    b.className = "btn";
-    b.style.setProperty("--face", p.face);
-    b.style.setProperty("--label", p.label_c);
-    b.innerHTML = '<span class="chiffre"></span><span class="label"></span>';
-    b.querySelector(".chiffre").textContent = p.n;
-    b.querySelector(".label").textContent   = p.label;
-    tap(b, () => annoncePari(p.n));
-    box.appendChild(b);
-  });
-
-  va("s-pari", null);
+/* Un mot s'illumine, les autres s'estompent ; les paris s'activent. */
+function majChoix(){
+  const enfants = el("ch-mots").children;
+  for (let i = 0; i < enfants.length; i++){
+    enfants[i].classList.toggle("sel", E.motChoisi === i);
+    enfants[i].classList.toggle("attenue", E.motChoisi !== null && E.motChoisi !== i);
+  }
+  [1,2,3].forEach((n) => { el("b-pari-" + n).disabled = E.motChoisi === null; });
 }
 
+/* ============================================================
+   2. TAMPON D'OUVERTURE - le seul passage obligatoire du tour.
+   Le mot n'est rendu dans le DOM qu'apres le serment.
+   ============================================================ */
 function annoncePari(n){
+  if (E.motChoisi === null) return;
+  const w = E.propositions[E.motChoisi];
+  E.t.mot = w.m;
+  E.t.val = w.v;
+  E.t.pariOuv = n;
+
   const adv = autre(E.t.ouvreur);
   const d   = donneur(adv);
   const a   = avatar(d);
-
-  E.t.pariOuv    = n;
   E.t.donneurAdv = d;
 
-  passeLeTelephone(adv, d,
-    "Passe le téléphone à " + a.nom,
-    a.nom + " peut voler le mot pour " + court(adv) + ".",
-    "Je suis " + a.nom + ", je jure de ne rien avoir vu",
-    dessineContre);
+  E.tampon = dessineContre;
+  E.tamponTeinte = adv;
+  el("tp-emoji").textContent = a.emoji;
+  el("tp-titre").textContent = "Passe le téléphone à " + a.nom;
+  el("b-serment").textContent = "Je suis " + a.nom + ", je jure de ne rien avoir vu";
+  va("s-tampon", adv);
 }
 
+/* ============================================================
+   3. CONTRE - ecran de memorisation.
+   Seul moment ou le donneur adverse voit le mot. S'il vole, il ne le
+   reverra plus : le mot domine, le pari adverse passe dessous.
+   ============================================================ */
 function dessineContre(){
-  el("co-kicker").textContent = "pari " + court(E.t.ouvreur);
-  el("co-pari").textContent   = E.t.pariOuv;
-  el("co-mot").textContent    = E.t.mot + " · " + E.t.val + " points";
-  el("co-note").textContent   = avatar(E.t.donneurAdv).nom + " : laisser la main, ou voler plus court";
+  const t = E.t;
+  el("co-mot").textContent  = t.mot;
+  el("co-val").textContent  = t.val + " points";
+  el("co-pari").textContent = court(t.ouvreur) + " parient " + t.pariOuv;
 
-  const box = el("co-liste");
-  box.innerHTML = "";
-  [1,2,3].forEach((n) => {
-    const possible = VOL_AUTORISE && n < E.t.pariOuv;
-    const b = document.createElement("button");
-    b.className = "btn";
-    b.disabled = !possible;
-    b.innerHTML = '<span class="chiffre"></span><span class="label"></span>';
-    b.querySelector(".chiffre").textContent = n;
-    b.querySelector(".label").textContent   =
-      possible ? "Voler en " + n + (n > 1 ? " coups" : " coup") : "impossible";
-    if (possible) tap(b, () => trancheLeContre(true, n));
-    box.appendChild(b);
+  [1,2].forEach((n) => {
+    el("b-voler-" + n).disabled = !(VOL_AUTORISE && n < t.pariOuv);
   });
 
-  va("s-contre", autre(E.t.ouvreur));
+  va("s-contre", autre(t.ouvreur));
 }
 
-/* Le contre tranche : qui joue le mot, avec combien de coups, et qui arbitre. */
+/* Le contre tranche : qui joue le mot, avec combien de coups, et qui arbitre.
+   Sans vol, le telephone est deja chez les arbitres : aucun passage.
+   Avec vol, il doit rejoindre l'equipe volee : un tampon collectif. */
 function trancheLeContre(vol, n){
   const t = E.t;
   t.vol      = vol;
@@ -848,27 +860,20 @@ function trancheLeContre(vol, n){
 
   E.braises   = t.pari;
   E.coup      = 1;
-  E.phase     = "indice";
-  E.annulable = null;
+  E.annulable = false;
 
-  passeLeTelephone(t.arbitre, joueur(t.arbitre, 0),
-    "Passe le téléphone aux " + sansArt(t.arbitre),
-    avatar(t.donneur).nom + " regarde avec eux · " + avatar(t.devineur).nom + " ferme les yeux",
-    "Personne ici n’est " + avatar(t.devineur).nom,
-    dessineRevelation);
-}
+  if (!vol){ dessineArbitrage(); return; }
 
-function dessineRevelation(){
-  const t = E.t;
-  el("rv-mot").textContent  = t.mot;
-  el("rv-val").textContent  = t.val + " points";
-  el("rv-note").textContent = avatar(t.donneur).nom + " mémorise · les arbitres retiennent · "
-                            + t.pari + (t.pari > 1 ? " coups" : " coup");
-  va("s-revele", t.arbitre);
+  E.tampon = dessineArbitrage;
+  E.tamponTeinte = t.arbitre;
+  el("tv-avatars").textContent = E.equipes[t.arbitre].map((id) => avatar(id).emoji).join("");
+  el("tv-titre").textContent   = "Le téléphone passe aux " + sansArt(t.arbitre);
+  va("s-tampon-vol", t.arbitre);
 }
 
 /* ============================================================
-   ARBITRAGE - deux temps par coup : l'indice, puis la reponse.
+   4. MANCHE - une seule question, un seul tap par coup.
+   L'ecran ne change pas de forme pendant toute la manche.
    ============================================================ */
 function dessineArbitrage(){
   const t = E.t;
@@ -876,38 +881,17 @@ function dessineArbitrage(){
   const br = el("ar-braises");
   br.innerHTML = "";
   for (let i = 0; i < t.pari; i++){
-    const i_ = document.createElement("i");
-    if (i < E.braises) i_.className = "vive";
-    br.appendChild(i_);
+    const p = document.createElement("i");
+    if (i < E.braises) p.className = "vive";
+    br.appendChild(p);
   }
 
-  el("ar-preneur").textContent = court(t.preneur) + " · " + E.score[t.preneur];
-  el("ar-arbitre").textContent = court(t.arbitre) + " · " + E.score[t.arbitre];
-
   el("b-annuler").disabled = !E.annulable;
-
-  const indice = E.phase === "indice";
-  el("ar-carte").className = "carte-temps " + E.phase;
-  el("ar-duo").className   = "duo-actions " + E.phase;
-  el("ar-kicker").textContent = indice ? "temps 1 — l'indice" : "temps 2 — la réponse";
-  el("ar-titre").textContent  = indice
-    ? "L'indice de " + avatar(t.donneur).nom + " ?"
-    : "La réponse de " + avatar(t.devineur).nom + " ?";
-  el("ar-hint").textContent = indice
-    ? "banni — le mot, sa famille, plus d'un mot, les gestes"
-    : "à voix haute, une seule proposition";
-  el("b-oui").textContent = indice ? "Valide"   : "Trouvé";
-  el("b-non").textContent = indice ? "Interdit" : "Raté";
-
-  el("b-voir").textContent = E.motVisible ? t.mot : "voir le mot (maintenir)";
+  el("ar-question").textContent = "La réponse de " + avatar(t.devineur).nom + " ?";
+  el("ar-mot").textContent = t.mot;
+  el("ar-mot").classList.remove("on");
 
   va("s-arbitre", null);
-}
-
-function valideIndice(){
-  E.phase = "reponse";
-  E.annulable = "valide";
-  dessineArbitrage();
 }
 
 function rateLaReponse(){
@@ -915,26 +899,26 @@ function rateLaReponse(){
   if (reste <= 0){ conclut("quota épuisé", autre(E.t.preneur)); return; }
   E.braises   = reste;
   E.coup     += 1;
-  E.phase     = "indice";
-  E.annulable = "rate";
+  E.annulable = true;
   dessineArbitrage();
 }
 
+/* Un `Raté` mal tape coute une braise : on peut le reprendre, une fois. */
 function annule(){
   if (!E.annulable) return;
-  if (E.annulable === "valide"){
-    E.phase = "indice";
-  } else {
-    E.braises += 1;
-    E.coup = Math.max(1, E.coup - 1);
-    E.phase = "reponse";
-  }
-  E.annulable = null;
+  E.braises  += 1;
+  E.coup      = Math.max(1, E.coup - 1);
+  E.annulable = false;
   dessineArbitrage();
+}
+
+function dessineBanni(){
+  el("bn-note").textContent = "Le tour s’arrête · +" + E.t.val + " pour " + court(E.t.arbitre);
+  va("s-banni", E.t.arbitre);
 }
 
 /* ============================================================
-   CONCLUSION DU TOUR
+   5. RESOLUTION
    ============================================================ */
 function conclut(issue, gagnant){
   const t = E.t;
@@ -959,18 +943,18 @@ function conclut(issue, gagnant){
     n: E.log.length + 1, ouvre: court(t.ouvreur), donneurOuv: avatar(t.donneurOuv).nom,
     mot: t.mot, val: t.val, pariOuv: t.pariOuv, contre: t.vol ? "o" : "n",
     pariRetenu: t.pari, preneur: court(t.preneur), donneurRetenu: avatar(t.donneur).nom,
-    issue: issue, coup: E.coup, points: court(gagnant), main: t.vol ? "o" : "n"
+    issue: issue, coup: E.coup, points: court(gagnant), main: t.vol ? "o" : "n",
+    bans: t.bans, coupBan: t.coupBan
   });
 
-  E.ouvreur   = suivant;
-  E.finie     = finie;
-  E.resultat  = { issue: issue, gagnant: gagnant, val: t.val, finie: finie };
-  E.motVisible = false;
+  E.ouvreur  = suivant;
+  E.finie    = finie;
+  E.resultat = { issue: issue, gagnant: gagnant, val: t.val, finie: finie };
 
   dessineResultat();
 }
 
-const EMOJI_ISSUE  = { "trouvé":"🎉", "quota épuisé":"💀", "indice refusé":"⛔" };
+const EMOJI_ISSUE   = { "trouvé":"🎉", "quota épuisé":"💀", "indice refusé":"⛔" };
 const LIBELLE_ISSUE = { "trouvé":"mot trouvé", "quota épuisé":"quota épuisé", "indice refusé":"indice refusé" };
 
 function dessineResultat(){
@@ -979,14 +963,12 @@ function dessineResultat(){
   el("re-issue").textContent  = LIBELLE_ISSUE[r.issue];
   el("re-ligne").textContent  = court(r.gagnant) + " encaissent";
   el("re-points").textContent = "+" + r.val;
-  el("re-sc-lichen").textContent = E.score.lichen;
-  el("re-sc-braise").textContent = E.score.braise;
 
   el("re-suite").textContent =
-      r.finie             ? "Dernier tour joué. On compare."
-    : E.finProgrammee     ? "Seuil franchi — " + court(E.ouvreur) + " ouvrent le dernier tour."
-    : E.t.vol             ? court(E.ouvreur) + " gardent la main (vol)."
-    :                       "Ouverture aux " + sansArt(E.ouvreur) + ".";
+      r.finie         ? "Dernier tour joué. On compare."
+    : E.finProgrammee ? "Seuil franchi — " + court(E.ouvreur) + " ouvrent le dernier tour."
+    : E.t.vol         ? court(E.ouvreur) + " gardent la main (vol)."
+    :                   "Ouverture aux " + sansArt(E.ouvreur) + ".";
 
   el("b-suite").textContent = E.finie ? "Voir le vainqueur" : "Tour suivant";
   va("s-resultat", r.gagnant);
@@ -1003,13 +985,16 @@ function dessineFin(){
 }
 
 /* ============================================================
-   LOG - une ligne par tour, pour regler les disputes apres coup.
+   LOG - une ligne par tour. Les deux dernieres colonnes mesurent
+   l'effet du passage du bannissement en bouton facultatif : si le taux
+   tombe a zero, l'arbitrage a disparu du jeu.
    ============================================================ */
-const ENTETE_LOG = "tour|ouvre|donneur|mot|valeur|pari ouv|contré|pari retenu|preneur|donneur retenu|issue|coup fin|points à|main par vol";
+const ENTETE_LOG = "tour|ouvre|donneur|mot|valeur|pari ouv|contré|pari retenu|preneur|donneur retenu|issue|coup fin|points à|main par vol|bannissements|coup du bannissement";
 
 const ligneLog = (l) => [l.n, l.ouvre, l.donneurOuv, l.mot, l.val, "pari " + l.pariOuv,
   "contré " + l.contre, "retenu " + l.pariRetenu, l.preneur, l.donneurRetenu, l.issue,
-  "coup " + l.coup, "+" + l.val + " " + l.points, "vol " + l.main].join(" | ");
+  "coup " + l.coup, "+" + l.val + " " + l.points, "vol " + l.main,
+  "bans " + l.bans, "coup ban " + (l.coupBan === null ? "-" : l.coupBan)].join(" | ");
 
 function dessineLog(){
   el("lg-titre").textContent = "Log · " + E.log.length + " tours";
@@ -1035,7 +1020,7 @@ function dessineLog(){
 function copieLog(){
   const texte = ENTETE_LOG + "\n" + E.log.map((l) => [l.n, l.ouvre, l.donneurOuv, l.mot, l.val,
     l.pariOuv, l.contre, l.pariRetenu, l.preneur, l.donneurRetenu, l.issue, l.coup,
-    l.points, l.main].join("|")).join("\n");
+    l.points, l.main, l.bans, l.coupBan === null ? "" : l.coupBan].join("|")).join("\n");
   try {
     navigator.clipboard.writeText(texte);
     el("b-copier").textContent = "Copié ✓";
@@ -1052,13 +1037,18 @@ tap("b-retour",       reculeMiseEnPlace);
 tap("b-commencer",    commence);
 tap("b-changer",      () => { if (E.reprise){ E.choix = []; E.reprise = false; } else E.choix.pop(); dessineMiseEnPlace(); });
 tap("b-ouvrir",       ouvreLeTour);
+[1,2,3].forEach((n) => tap("b-pari-" + n, () => annoncePari(n)));
 tap("b-serment",      () => { const suite = E.tampon; E.tampon = null; if (suite) suite(); });
 tap("b-laisser",      () => trancheLeContre(false, 0));
-tap("b-memorise",     dessineArbitrage);
+[1,2].forEach((n) => tap("b-voler-" + n, () => {
+  if (VOL_AUTORISE && n < E.t.pariOuv) trancheLeContre(true, n);
+}));
+tap("b-nous-arbitrons", () => { const suite = E.tampon; E.tampon = null; if (suite) suite(); });
 tap("b-annuler",      annule);
-tap("b-oui",          () => { if (E.phase === "indice") valideIndice(); else conclut("trouvé", E.t.preneur); });
-tap("b-non",          () => { if (E.phase === "indice") dessineBanni(); else rateLaReponse(); });
-tap("b-banni-ok",     () => conclut("indice refusé", E.t.arbitre));
+tap("b-trouve",       () => conclut("trouvé", E.t.preneur));
+tap("b-rate",         rateLaReponse);
+tap("b-bannir",       () => dessineBanni());
+tap("b-banni-ok",     () => { E.t.bans += 1; E.t.coupBan = E.coup; conclut("indice refusé", E.t.arbitre); });
 tap("b-banni-retour", dessineArbitrage);
 tap("b-suite",        () => { if (E.finie) dessineFin(); else ouvreLeTour(); });
 tap("b-rejouer",      () => { E.reprise = true; dessineConfirmation(); });
@@ -1066,31 +1056,29 @@ tap("b-copier",       copieLog);
 tap("b-fermer-log",   () => { const r = retourLog; retourLog = null; (r || dessineMiseEnPlace)(); });
 tap("debug-open",     () => { if (ecranCourant !== "s-debug"){ retourLog = redessineCourant(); dessineLog(); } });
 
-function dessineBanni(){
-  el("bn-note").textContent = "Le tour s’arrête · +" + E.t.val + " pour " + court(E.t.arbitre);
-  va("s-banni", E.t.arbitre);
-}
-
 /* Rendu de l'ecran courant, pour revenir du log exactement ou on etait. */
 function redessineCourant(){
   const table = {
     "s-grille": dessineMiseEnPlace, "s-confirm": dessineConfirmation,
     "s-tirage": () => va("s-tirage", E.ouvreur),
+    "s-choix": dessineChoix,
     "s-tampon": () => va("s-tampon", E.tamponTeinte),
-    "s-choix": dessineChoix, "s-pari": dessinePari, "s-contre": dessineContre,
-    "s-revele": dessineRevelation, "s-arbitre": dessineArbitrage, "s-banni": dessineBanni,
+    "s-contre": dessineContre,
+    "s-tampon-vol": () => va("s-tampon-vol", E.tamponTeinte),
+    "s-arbitre": dessineArbitrage, "s-banni": dessineBanni,
     "s-resultat": dessineResultat, "s-fin": dessineFin
   };
   return table[ecranCourant] || dessineMiseEnPlace;
 }
 
-/* Le mot ne s'affiche que pendant l'appui : impossible de le laisser trainer. */
-(function boutonVoir(){
-  const b = el("b-voir");
+/* Le bouton 👁 est obligatoire, pas decoratif : apres un vol, le coequipier
+   du voleur n'a jamais vu le mot et doit pourtant arbitrer. Le mot ne
+   s'affiche que pendant l'appui, jamais en persistant. */
+(function boutonOeil(){
+  const b = el("b-oeil");
   const montre = (v) => {
     if (!E.t || !E.t.mot) return;
-    E.motVisible = v;
-    b.textContent = v ? E.t.mot : "voir le mot (maintenir)";
+    el("ar-mot").classList.toggle("on", v);
   };
   b.addEventListener("pointerdown", (e) => { b.setPointerCapture && b.setPointerCapture(e.pointerId); montre(true); });
   ["pointerup","pointerleave","pointercancel"].forEach((ev) => b.addEventListener(ev, () => montre(false)));
