@@ -119,6 +119,21 @@ Pas de vol : l'ouverture passe à l'autre équipe. Vol : le voleur garde la main
 Franchir `CIBLE` **n'arrête pas la partie** — cela déclenche un dernier tour,
 ouvert par l'équipe menée. C'est le score après ce tour qui départage.
 
+## Les touches
+
+Aucun relief : ni socle, ni ombre, ni déplacement. Le faux volume ne tenait pas —
+il mordait sur les gouttières, se mélangeait au fond, et lisait mal à bout de
+bras.
+
+Une touche est un **aplat cerné d'un trait franc**, dans l'esprit des tampons du
+jeu. L'appui l'**encre** : la face prend la couleur du libellé et le libellé
+celle de la face. Instantané, sans mouvement, et jamais ambigu — on voit du
+premier coup d'œil quelle touche a répondu. Le mot retenu suit la même règle,
+avec un trait doré épaissi.
+
+La seule ombre qui subsiste dans le fichier est celle du cadre d'appareil, un
+décor de bureau qui disparaît sur téléphone.
+
 ## Éditer le corpus
 
 Tout est en haut de `index.html`, dans un bloc `<script>` isolé :
