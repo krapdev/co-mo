@@ -151,13 +151,11 @@ button{font-family:var(--font)}
 .centre{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px}
 .tete{text-align:center}
 
-@keyframes kfloat{0%,100%{transform:translateY(-5px) rotate(-2deg)}50%{transform:translateY(7px) rotate(2deg)}}
-@keyframes kbig{0%,100%{transform:translateY(-9px) rotate(-3deg) scale(.99)}50%{transform:translateY(11px) rotate(3deg) scale(1.02)}}
 @keyframes kin{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-.flotte{animation:kfloat 3.6s ease-in-out infinite}
-.flotte-grand{animation:kbig 3.2s ease-in-out infinite}
+/* Les emoji ne bougent pas : ils portent l'identite de chaque joueur et
+   doivent rester lisibles d'un coup d'oeil, telephone en main. */
 @media (prefers-reduced-motion:reduce){
-  .flotte,.flotte-grand,.screen.on{animation:none}
+  .screen.on{animation:none}
 }
 
 /* ============================================================
@@ -366,7 +364,7 @@ button{font-family:var(--font)}
 
     <!-- ================= TIRAGE AU SORT ================= -->
     <div class="screen pile-centre" id="s-tirage">
-      <div class="geant flotte-grand">🎲</div>
+      <div class="geant">🎲</div>
       <div class="kicker">le sort désigne</div>
       <div class="titre-sort" id="tir-equipe"></div>
       <button class="btn clair grand" id="b-ouvrir" style="margin-top:26px;width:100%;min-height:72px">Ouvrir le tour</button>
@@ -375,7 +373,7 @@ button{font-family:var(--font)}
     <!-- ================= TAMPON - piece critique ================= -->
     <div class="screen" id="s-tampon">
       <div class="grow centre">
-        <div class="avatar-xl flotte-grand" id="tp-emoji"></div>
+        <div class="avatar-xl" id="tp-emoji"></div>
         <div class="tp-titre" id="tp-titre"></div>
         <div class="tp-sous" id="tp-sous"></div>
       </div>
@@ -385,7 +383,7 @@ button{font-family:var(--font)}
     <!-- ================= CHOIX DU MOT ================= -->
     <div class="screen" id="s-choix">
       <div class="tete">
-        <div class="avatar-md flotte" id="ch-emoji"></div>
+        <div class="avatar-md" id="ch-emoji"></div>
         <div class="ch-titre" id="ch-titre"></div>
         <div class="kicker" style="font-size:15px;letter-spacing:.1em;opacity:.65">cinq mots, un seul</div>
       </div>
@@ -452,7 +450,7 @@ button{font-family:var(--font)}
     <!-- ================= INDICE BANNI ================= -->
     <div class="screen" id="s-banni">
       <div class="grow centre" style="gap:10px">
-        <div class="re-emoji flotte-grand">⛔</div>
+        <div class="re-emoji">⛔</div>
         <div class="bn-titre">Indice banni</div>
         <div class="bn-note" id="bn-note"></div>
       </div>
@@ -463,7 +461,7 @@ button{font-family:var(--font)}
     <!-- ================= RESULTAT DU TOUR ================= -->
     <div class="screen" id="s-resultat">
       <div class="grow centre">
-        <div class="re-emoji flotte-grand" id="re-emoji"></div>
+        <div class="re-emoji" id="re-emoji"></div>
         <div class="kicker" style="font-size:16px" id="re-issue"></div>
         <div class="re-ligne" id="re-ligne"></div>
         <div class="re-points" id="re-points"></div>
@@ -478,7 +476,7 @@ button{font-family:var(--font)}
 
     <!-- ================= FIN DE PARTIE ================= -->
     <div class="screen" id="s-fin" style="text-align:center">
-      <div class="re-emoji flotte-grand" style="font-size:88px">🏆</div>
+      <div class="re-emoji" style="font-size:88px">🏆</div>
       <div class="fin-titre" id="fin-titre"></div>
       <div class="fin-cartes">
         <div class="carte-eq eq-lichen">
@@ -631,7 +629,6 @@ function dessineMiseEnPlace(){
     b.setAttribute("aria-label", a.nom);
     b.innerHTML = '<span class="e"></span><span class="n"></span>';
     b.querySelector(".e").textContent = a.emoji;
-    b.querySelector(".e").classList.add("flotte");
     b.querySelector(".n").textContent = a.nom;
     if (!pris) tap(b, () => choisitAvatar(a.id));
     g.appendChild(b);
@@ -676,7 +673,7 @@ function dessineConfirmation(){
       if (!aid) return;
       const a = avatar(aid);
       const d = document.createElement("div");
-      d.innerHTML = '<div class="e flotte"></div><div class="n"></div>';
+      d.innerHTML = '<div class="e"></div><div class="n"></div>';
       d.querySelector(".e").textContent = a.emoji;
       d.querySelector(".n").textContent = a.nom;
       duo.appendChild(d);
