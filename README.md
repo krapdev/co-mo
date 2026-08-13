@@ -1,130 +1,81 @@
 # Kowo
 
-Jeu de mots par équipes, à passer de main en main. Un seul téléphone, quatre
-joueurs, deux équipes — **les Fougères Furieuses** et **les Cendres Contrariées**.
+Prototype jouable d'un jeu de mots mobile. **Un seul fichier : `index.html`.**
+Aucun build, aucune dépendance, aucun réseau — ouvre le fichier et joue, y compris hors-ligne.
 
-Implementation of the `Kowo.dc.html` Claude Design component: a React + TypeScript
-PWA built from the design's template and its `DCLogic` state machine.
+4 joueurs, 2 équipes de 2, **un seul téléphone** qui passe de main en main. Portrait uniquement.
 
-## Running it
+Les **Fougères Furieuses** (lichen) contre les **Cendres Contrariées** (braise).
+Forme longue sur les écrans solennels (tirage au sort, constitution des équipes, fin de
+partie), forme courte partout ailleurs.
 
-```bash
-npm install
-npm run dev        # dev server
-npm run build      # typecheck + production build to dist/
-npm run preview    # serve the build
-npm test           # engine rule tests
-```
+Cette version reprend la maquette `Kowo.dc.html` : parchemin et grain de papier, écrans
+teintés aux couleurs de l'équipe qui tient le téléphone, boutons posés sur un socle plein.
 
-## Deploying to GitHub Pages
+## Jouer
 
-The build uses a relative `base`, so it runs from any subpath — no config
-change needed for a project page at `/<repo>/`.
+Ouvre `index.html` dans le navigateur du téléphone. Pour le plein écran sans barre
+d'adresse : « Ajouter à l'écran d'accueil » (un manifest PWA est généré en mémoire).
 
-`.github/workflows/deploy.yml` builds, tests and publishes on every push to the
-app's branch (and on manual dispatch). It needs Pages switched on once:
+Le cadre d'appareil visible sur grand écran est un confort de bureau : dès que la fenêtre
+ne peut plus l'accueillir, l'app prend tout l'écran et respecte l'encoche.
 
-> **Settings → Pages → Build and deployment → Source: _GitHub Actions_**
+## Le tour, en cinq temps
 
-Until that is set, `configure-pages` fails with "Pages is not enabled". The
-workflow's `branches:` trigger points at the current feature branch — repoint it
-at your default branch once this is merged.
+1. **Le tirage** — le sort désigne l'équipe qui ouvre.
+2. **Le choix** — le donneur voit cinq mots (deux à 10 points, deux à 20, un à 30) et
+   en retient un seul.
+3. **Le pari** — il annonce en combien de coups son équipe trouvera : 1, 2 ou 3.
+   Un pari à **1 coup est involable**.
+4. **Le contre** — le donneur adverse peut **voler** le mot en annonçant strictement
+   moins de coups, ou laisser la main.
+5. **L'arbitrage** — l'équipe qui ne joue pas arbitre, en deux temps par coup :
+   l'indice (**Valide** / **Interdit**), puis la réponse (**Trouvé** / **Raté**).
 
-## The rules
+### Les points
 
-A round moves through five beats.
-
-1. **Le tirage.** A coin toss picks the opening team.
-2. **Le choix.** The opening team's clue-giver sees five words — two at 10
-   points, two at 20, one at 30 — and picks one.
-3. **Le pari.** They bid how few guesses ("coups") their team needs: 1, 2 or 3.
-   A 1-coup bid is *involable* — it cannot be undercut.
-4. **Le contre.** The other team's clue-giver may **steal** the word by
-   committing to a strictly shorter bid, or leave it.
-5. **L'arbitrage.** The team not playing judges, in two beats per guess:
-   the clue (**Valide** / **Interdit**) then the answer (**Trouvé** / **Raté**).
-
-Scoring:
-
-| Outcome | Points go to |
+| Issue | Les points vont |
 | --- | --- |
-| `trouvé` — word guessed within the bid | the playing team |
-| `quota épuisé` — guesses ran out | the arbiters |
-| `indice refusé` — a clue was banned | the arbiters |
+| `trouvé` — le mot est deviné dans le pari | à l'équipe qui joue |
+| `quota épuisé` — les coups sont consommés | aux arbitres |
+| `indice refusé` — un indice est banni | aux arbitres |
 
-The word is worth its face value either way, and is then burned from the pool.
-Only the playing team rotates its clue-giver. An unstolen round passes the
-opening to the other team; a stolen one leaves it with the thief.
+Le mot vaut sa valeur dans tous les cas, puis quitte la réserve. Seule l'équipe qui a joué
+fait tourner son donneur. Un tour non volé passe l'ouverture à l'autre équipe ; un tour
+volé la laisse au voleur.
 
-**Ending.** Crossing the target score does not end the game — it arms one final
-round, opened by the *trailing* team. Whoever leads after that round wins.
+### La fin
 
-Between every hand-off the phone shows a **tampon** screen: the incoming holder
-confirms an oath ("je jure de ne rien avoir vu") before anything is revealed.
-The whole game rests on that screen being honoured.
+Franchir `CIBLE` **n'arrête pas la partie** : cela déclenche un dernier tour, ouvert par
+l'équipe menée. C'est le score après ce tour qui départage.
 
-## Layout
+### Le tampon
 
-```
-src/
-  game/
-    types.ts       state, actions and domain types
-    data.ts        avatars, word corpus, team names
-    theme.ts       palettes
-    engine.ts      the rules — a pure reducer
-    engine.test.ts 37 tests over the rule set
-    view.ts        per-screen colour tinting
-    storage.ts     last line-up, persisted
-  screens/         one component per screen of the design
-  components/      Button, font helper
-  useKowo.ts       reducer + the app's only source of randomness
-  App.tsx          device frame, tint layers, screen switch
-```
+Entre chaque passage de main, un écran de serment : celui qui reçoit le téléphone jure
+n'avoir rien vu avant que quoi que ce soit ne s'affiche. Tout le jeu repose sur cet écran.
+Un verrou de 400 ms empêche un doigt pressé d'enchaîner deux écrans et de brûler un secret.
 
-### The engine is pure
+## Éditer le corpus
 
-`reduce(state, action, rules)` is a pure function. The three actions that need
-randomness — `start` (coin toss), `beginTurn` and `cont` (the five-word deal) —
-take it as payload rather than calling `Math.random` internally. `useKowo`
-supplies it at dispatch time and is the only non-deterministic part of the app.
+Tout est en haut de `index.html`, dans un bloc `<script>` isolé :
 
-This matters for correctness, not just taste: React double-invokes reducers under
-`StrictMode`, so a reducer that rolled its own dice would deal twice per turn. It
-also makes the rules exhaustively testable — the tests drive whole games through
-a seeded generator.
+- `CORPUS` — les 100 mots par palier de points (`10`, `20`, `30`).
+- `EQUIPES` — les deux noms d'équipe, forme longue et forme courte.
+- `TIRAGE` — la composition de la main de 5 mots (par défaut 2 faciles, 2 moyens, 1 dur).
+- `CIBLE` — le score qui déclenche le dernier tour (100).
+- `VOL_AUTORISE` — mets `false` pour jouer sans contre.
+- `AVATARS` — les 8 créatures proposées.
 
-### Tunable rules
+Si tu élargis le corpus : un seul mot, au singulier, sans article ; aucune racine partagée
+avec un avatar ou un nom d'équipe ; les ambiguïtés sont voulues (glace, sang, main).
 
-The design exposed two editor props, kept here as `Rules` (`src/game/types.ts`)
-and passed to `<App>`:
+## Le log
 
-| Rule | Default | Notes |
-| --- | --- | --- |
-| `scoreCible` | `100` | Score that arms the final round (design bounds: 40–200, step 10) |
-| `volAutorise` | `true` | Whether stealing is allowed at all |
+Le bouton `log`, en bas à droite, ouvre le journal : une ligne par tour, avec le pari
+d'ouverture, le contre, l'issue et le coup final. « Copier le log » met le tout dans le
+presse-papier en colonnes séparées par des `|`, prêt pour un tableur.
 
-There is no settings screen — the design has none. Override at the mount point
-to change them.
+## Publier
 
-## Notes on the implementation
-
-Two places where the design needed a decision rather than a transcription:
-
-- **The device frame.** The design draws a 390×844 phone with a bezel, which is
-  a desktop-preview affordance. The frame renders when the viewport can fit it;
-  on a real phone or an installed PWA the app goes full-bleed and respects the
-  safe-area insets instead.
-- **Press states.** Every control sits on a solid colour ledge. Nothing in a
-  static design says what a press looks like, so buttons sink into their ledge —
-  the interaction that visual language implies.
-
-Smaller things: `theme-color` follows the current screen's tint so an installed
-app's status bar matches; the Baloo 2 `font` shorthands carry a fallback stack so
-layout survives the webfont failing to load; hold-to-peek uses pointer events
-rather than the design's paired mouse/touch handlers, which would double-fire on
-touch devices; and `prefers-reduced-motion` disables the floating animations.
-
-One string is reproduced as designed rather than corrected: the resolution screen
-reads "Ouverture à les Fougères." where French would want *aux*. It comes from
-concatenating a team's short name, which already carries its article. Worth a fix
-in the design, but it is a copy change, not an implementation one.
+Le fichier est autonome : GitHub Pages en mode « Deploy from a branch », dossier racine,
+suffit. Rien à construire.
