@@ -1,0 +1,884 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2E2A22">
+<title>Kowo — prototype</title>
+<style>
+/* ─────────────────────────────────────────────
+   Kowo — prototype single page
+   Direction visuelle : parchemin, lichen / braise,
+   typo grasse arrondie, emoji 80px+ à respiration lente,
+   aucun élément tactile sous 44px.
+   ───────────────────────────────────────────── */
+
+:root{
+  --parchemin:      #F0E2C4;
+  --parchemin-fonce:#E3D0A8;
+  --encre:          #2E2A22;
+  --encre-pale:     #6B6151;
+
+  --lichen:         #4C7A3F;
+  --lichen-fonce:   #33562A;
+  --lichen-clair:   #6E9A5C;
+
+  --braise:         #C4522A;
+  --braise-fonce:   #93361A;
+  --braise-clair:   #E0824B;
+
+  --bandeau-h:      64px;
+  --rayon:          18px;
+  --tap-min:        44px;
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  margin:0;
+  background:var(--encre);
+  color:var(--encre);
+  font-family:ui-rounded,"SF Pro Rounded","Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,"Nunito",sans-serif;
+  font-weight:800;
+  letter-spacing:.01em;
+  overscroll-behavior:none;
+  -webkit-user-select:none;user-select:none;
+}
+
+#app{
+  position:relative;
+  max-width:480px;
+  margin:0 auto;
+  min-height:100dvh;
+  background:var(--parchemin);
+  background-image:
+    radial-gradient(ellipse at 20% 10%, rgba(255,255,255,.55), transparent 60%),
+    radial-gradient(ellipse at 80% 90%, rgba(147,54,26,.07), transparent 55%);
+  overflow:hidden;
+}
+
+/* ── Bandeau de score — permanent, hors du flux ── */
+.bandeau{
+  position:fixed;top:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:480px;height:var(--bandeau-h);
+  display:flex;align-items:stretch;z-index:40;
+  pointer-events:none; /* non tappable */
+  box-shadow:0 2px 0 rgba(0,0,0,.18);
+}
+.bandeau .moitie{
+  flex:1;display:flex;align-items:center;gap:8px;
+  padding:0 14px;color:#fff;
+}
+.bandeau .moitie.gauche{background:var(--lichen);justify-content:flex-start}
+.bandeau .moitie.droite{background:var(--braise);justify-content:flex-end}
+.bandeau .avatars{font-size:32px;line-height:1;letter-spacing:-2px;white-space:nowrap}
+.bandeau .points{font-size:40px;line-height:1;font-weight:800;font-variant-numeric:tabular-nums}
+.bandeau .moitie.gagne .points{text-shadow:0 0 14px rgba(255,255,255,.6)}
+.bandeau .flamme{font-size:20px}
+
+/* ── Écrans ── */
+.ecran{
+  position:relative;min-height:100dvh;
+  padding:calc(var(--bandeau-h) + 14px) 16px calc(16px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;
+}
+.ecran.plein{padding-top:calc(14px + env(safe-area-inset-top));justify-content:center;align-items:center;text-align:center}
+.ecran.plein.lichen{background:var(--lichen);color:#fff}
+.ecran.plein.braise{background:var(--braise);color:#fff}
+.ecran.plein.nuit{background:var(--encre);color:var(--parchemin)}
+
+/* ── Briques ── */
+.titre{font-size:26px;line-height:1.15;margin:0 0 6px}
+.sous{font-size:17px;font-weight:700;opacity:.72;margin:0}
+.emoji-geant{
+  font-size:96px;line-height:1;
+  animation:respire 4.6s ease-in-out infinite;
+}
+.emoji-paire{font-size:80px;line-height:1;letter-spacing:-6px;animation:respire 4.6s ease-in-out infinite}
+@keyframes respire{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+@media (prefers-reduced-motion:reduce){
+  .emoji-geant,.emoji-paire{animation:none}
+}
+
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  min-height:var(--tap-min);width:100%;
+  border:none;border-radius:var(--rayon);
+  font-family:inherit;font-weight:800;font-size:22px;
+  color:#fff;background:var(--encre);
+  padding:16px 18px;cursor:pointer;
+  box-shadow:0 4px 0 rgba(0,0,0,.22);
+  transition:transform .06s ease;
+}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.22)}
+.btn[disabled]{opacity:.32;box-shadow:none;cursor:default}
+.btn.lichen{background:var(--lichen)}
+.btn.braise{background:var(--braise)}
+.btn.creme{background:var(--parchemin);color:var(--encre);box-shadow:0 4px 0 rgba(0,0,0,.18)}
+.btn.geant{min-height:110px;font-size:30px}
+.btn.fantome{
+  background:transparent;color:inherit;box-shadow:none;
+  border:3px solid currentColor;opacity:.85;font-size:18px;
+}
+
+.lien{
+  background:none;border:none;font-family:inherit;font-weight:800;
+  color:var(--encre-pale);font-size:15px;text-decoration:underline;
+  min-height:var(--tap-min);padding:0 12px;cursor:pointer;
+}
+
+.parchemin{
+  background:var(--parchemin-fonce);
+  border:3px solid rgba(46,42,34,.35);
+  border-radius:var(--rayon);
+  padding:14px 16px;
+}
+
+.pousse{flex:1}
+.rangee{display:flex;gap:10px}
+.centre{text-align:center}
+
+/* ── Écran choix du mot + pari ── */
+.mots{display:flex;flex-direction:column;gap:10px;flex:1;justify-content:center}
+.mot{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  width:100%;min-height:64px;padding:12px 18px;
+  border-radius:var(--rayon);border:3px solid rgba(46,42,34,.22);
+  background:var(--parchemin-fonce);color:var(--encre);
+  font-family:inherit;font-weight:800;font-size:30px;text-align:left;
+  cursor:pointer;transition:opacity .15s ease,transform .1s ease;
+}
+.mot .valeur{font-size:18px;opacity:.65;white-space:nowrap}
+.mots.a-choisi .mot{opacity:.34}
+.mots.a-choisi .mot.actif{
+  opacity:1;background:#fff;border-color:var(--lichen);
+  box-shadow:0 0 0 4px rgba(76,122,63,.28);transform:scale(1.02);
+}
+.paris{display:flex;gap:10px;margin-top:14px}
+.paris .btn{font-size:34px;min-height:84px}
+.legende{font-size:14px;font-weight:700;opacity:.6;text-align:center;margin:10px 0 4px}
+
+/* ── Écran de contre ── */
+.mot-cible{font-size:64px;line-height:1.05;word-break:break-word;text-align:center;margin:0}
+.mot-valeur{font-size:32px;text-align:center;opacity:.7;margin:6px 0 0}
+.memo{font-size:20px;text-align:center;line-height:1.3;margin:22px 0 0}
+.pari-adverse{font-size:26px;text-align:center;margin:18px 0 0}
+.trio{display:flex;gap:8px;margin-top:14px}
+.trio .btn{font-size:20px;min-height:110px;flex:1;padding:10px 6px}
+
+/* ── Écran arbitre ── */
+.barre-outils{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.braises{font-size:26px;letter-spacing:2px;flex:1}
+.braises .morte{opacity:.28}
+.outil{
+  min-width:var(--tap-min);min-height:var(--tap-min);
+  border-radius:14px;border:3px solid rgba(46,42,34,.3);
+  background:var(--parchemin-fonce);color:var(--encre);
+  font-family:inherit;font-weight:800;font-size:20px;padding:6px 12px;cursor:pointer;
+}
+.outil[disabled]{opacity:.3;cursor:default}
+.outil.oeil{font-size:24px}
+.bannir{
+  width:100%;text-align:left;font-size:16px;line-height:1.35;font-weight:800;
+  cursor:pointer;min-height:var(--tap-min);
+}
+.bannir .pastille{font-size:18px}
+.question{
+  flex:1;display:flex;align-items:center;justify-content:center;text-align:center;
+  font-size:40px;line-height:1.15;padding:18px 4px;
+}
+.verdicts{display:flex;gap:10px;height:32vh;min-height:150px}
+.verdicts .btn{height:100%;font-size:30px}
+
+/* ── Voile « voir le mot » ── */
+.voile{
+  position:fixed;inset:0;z-index:80;
+  background:rgba(46,42,34,.96);color:var(--parchemin);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  font-size:60px;text-align:center;padding:20px;
+}
+.voile small{font-size:18px;opacity:.65;font-weight:700}
+
+/* ── Confirmation plein écran ── */
+.confirme{
+  position:fixed;inset:0;z-index:90;background:var(--braise);color:#fff;
+  display:flex;flex-direction:column;justify-content:center;gap:16px;padding:24px;
+  text-align:center;
+}
+
+/* ── Log ── */
+.log{padding-top:calc(14px + env(safe-area-inset-top))}
+.log table{width:100%;border-collapse:collapse;font-size:11px;font-weight:700}
+.log th,.log td{border:1px solid rgba(46,42,34,.25);padding:4px 5px;text-align:left;white-space:nowrap}
+.log th{background:var(--parchemin-fonce)}
+.defile{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:10px 0}
+
+/* ── Réglages ── */
+.champ{display:flex;align-items:center;gap:10px;margin:8px 0}
+.champ input{
+  flex:1;min-height:var(--tap-min);border-radius:12px;border:3px solid rgba(46,42,34,.25);
+  background:#fff;font-family:inherit;font-weight:800;font-size:17px;padding:0 12px;color:var(--encre);
+  min-width:0;
+}
+.emojis{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px}
+.emojis button{
+  width:var(--tap-min);height:var(--tap-min);font-size:24px;line-height:1;
+  border-radius:12px;border:3px solid transparent;background:var(--parchemin-fonce);cursor:pointer;
+}
+.emojis button.actif{border-color:var(--encre);background:#fff}
+.bloc-equipe{margin:14px 0;padding:12px;border-radius:var(--rayon)}
+.bloc-equipe.lichen{background:rgba(76,122,63,.16)}
+.bloc-equipe.braise{background:rgba(196,82,42,.16)}
+.etiquette{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;opacity:.6}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+"use strict";
+
+/* ═══════════════════════════════════════════════════════════
+   1. Données
+   ═══════════════════════════════════════════════════════════ */
+
+// Banque de mots par palier. Tirage sans remise sur toute la partie :
+// 24 mots par palier = 14 tours possibles à 5 mots par tour.
+const BANQUE = {
+  10:["CHAT","PAIN","LUNE","VÉLO","PLUIE","ARBRE","PORTE","POMME","NEIGE","ÉCOLE",
+      "ROUTE","MIROIR","PLAGE","CHAISE","BATEAU","JARDIN","MONTRE","ÉCHELLE",
+      "FROMAGE","NUAGE","CLÉ","SOUPE","BOTTE","TAMBOUR"],
+  20:["GLACE","ORAGE","RACINE","SILENCE","VOISIN","CHASSE","RUINE","TUNNEL","MARÉE",
+      "CIRQUE","FANTÔME","BOUSSOLE","VERTIGE","CICATRICE","LABYRINTHE","ÉPOUVANTAIL",
+      "CRÉPUSCULE","MOUSSON","BRAISE","LICHEN","GRENIER","NAUFRAGE","VENDANGE","ÉCLIPSE"],
+  30:["NOSTALGIE","PARADOXE","VACARME","ÉQUILIBRE","HÉRITAGE","MALENTENDU","VERTU",
+      "ÉCHO","SERMENT","LIMBES","ENTROPIE","SOUPÇON","ÉPHÉMÈRE","ANTIDOTE","ALIBI",
+      "PRESTIGE","SCRUPULE","MIRAGE","DÉLUGE","INERTIE","REVANCHE","AUBAINE",
+      "PUDEUR","VESTIGE"]
+};
+
+const AVATARS = ["🍄","🪱","🐗","🕯️","🦔","🦌","🐌","🦉","🌰","🍂","🪵","🕸️","🐝","🦇","🌿","🔥"];
+
+const OBJECTIF = 100;
+
+const DEFAUT = {
+  equipes:[
+    {nom:"Les Fougères Furieuses", couleur:"lichen", joueurs:[{nom:"Tibiane",avatar:"🍄"},{nom:"Marek",avatar:"🪱"}]},
+    {nom:"Les Sangliers Songeurs",  couleur:"braise", joueurs:[{nom:"Olva",avatar:"🐗"},   {nom:"Nils", avatar:"🕯️"}]}
+  ]
+};
+
+/* ═══════════════════════════════════════════════════════════
+   2. État
+   ═══════════════════════════════════════════════════════════ */
+
+let S = null;              // état courant
+let avantResolution = null; // instantané pour l'annulation d'après-coup
+
+function nouvellePartie(config){
+  S = {
+    ecran:"tirage",
+    equipes: config.equipes.map(e => ({
+      nom:e.nom, couleur:e.couleur,
+      joueurs:e.joueurs.map(j => ({...j})),
+      score:0,
+      donneur:0            // index du prochain donneur de l'équipe
+    })),
+    pioche: melangerPioche(),
+    ouvreur: null,         // index de l'équipe qui ouvre le tour
+    numeroTour: 0,
+    finArmee: false,       // une équipe a franchi 100 : dernier tour en cours
+    tour: null,            // état du tour courant
+    log: []
+  };
+  avantResolution = null;
+}
+
+function melangerPioche(){
+  const p = {};
+  for(const palier of [10,20,30]) p[palier] = melanger(BANQUE[palier].slice());
+  return p;
+}
+
+function melanger(t){
+  for(let i=t.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [t[i],t[j]]=[t[j],t[i]]; }
+  return t;
+}
+
+// 5 mots mélangeant les paliers, tirés sans remise sur toute la partie :
+// au moins un mot de chaque palier, puis 2 tirés dans ce qui reste.
+function tirerCinq(){
+  const tirage = [];
+  for(const palier of [10,20,30]){
+    if(S.pioche[palier].length) tirage.push({mot:S.pioche[palier].pop(), valeur:palier});
+  }
+  const reste = [];
+  for(const palier of [10,20,30]) for(const m of S.pioche[palier]) reste.push({mot:m, valeur:palier});
+  melanger(reste);
+  while(tirage.length < 5 && reste.length){
+    const pris = reste.pop();
+    S.pioche[pris.valeur] = S.pioche[pris.valeur].filter(m => m !== pris.mot);
+    tirage.push(pris);
+  }
+  return melanger(tirage);
+}
+
+const equipe   = i => S.equipes[i];
+const adverse  = i => 1 - i;
+const donneurDe = i => equipe(i).joueurs[equipe(i).donneur];
+const devineurDe = i => equipe(i).joueurs[1 - equipe(i).donneur];
+
+/* ═══════════════════════════════════════════════════════════
+   3. Déroulé d'un tour
+   ═══════════════════════════════════════════════════════════ */
+
+function demarrerTour(){
+  S.numeroTour++;
+  S.tour = {
+    ouvreur:S.ouvreur,
+    donneurOuvreur:{...donneurDe(S.ouvreur)},
+    donneurAdverse:{...donneurDe(adverse(S.ouvreur))},
+    tirage:tirerCinq(),
+    motChoisi:null,
+    pariOuverture:null,
+    vol:false,
+    pariRetenu:null,
+    preneuse:null, arbitre:null,
+    donneurRetenu:null, devineurRetenu:null,
+    braises:0,
+    coups:[],              // "trouvé" | "raté", dans l'ordre
+    bannissements:0,
+    coupDuBannissement:"",
+    issue:null
+  };
+  avantResolution = null;
+  aller("choix");
+}
+
+function choisirMot(index){
+  S.tour.motChoisi = S.tour.tirage[index];
+  rendre();
+}
+
+function parier(n){
+  S.tour.pariOuverture = n;
+  aller("tamponOuverture");
+}
+
+// Le contre : « Laisser » ou « Voler n ». Un pari égal ou supérieur est impossible.
+function laisser(){
+  const t = S.tour;
+  t.vol = false;
+  t.pariRetenu = t.pariOuverture;
+  t.preneuse = t.ouvreur;
+  t.arbitre  = adverse(t.ouvreur);
+  ouvrirManche();
+  aller("arbitre");           // pas d'écran de révélation : le donneur connaît son mot
+}
+
+function voler(n){
+  const t = S.tour;
+  t.vol = true;
+  t.pariRetenu = n;
+  t.preneuse = adverse(t.ouvreur);
+  t.arbitre  = t.ouvreur;      // l'équipe volée arbitre
+  ouvrirManche();
+  aller("tamponVol");
+}
+
+function ouvrirManche(){
+  const t = S.tour;
+  t.braises = t.pariRetenu;
+  t.donneurRetenu  = {...donneurDe(t.preneuse)};
+  t.devineurRetenu = {...devineurDe(t.preneuse)};
+}
+
+function verdict(trouve){
+  const t = S.tour;
+  t.coups.push(trouve ? "trouvé" : "raté");
+  if(trouve) return resoudre("trouvé", t.preneuse);
+  t.braises--;
+  if(t.braises <= 0) return resoudre("quota épuisé", t.arbitre);
+  rendre();
+}
+
+function annulerDernierVerdict(){
+  const t = S.tour;
+  if(!t.coups.length) return;
+  const dernier = t.coups.pop();
+  if(dernier === "raté") t.braises++;
+  rendre();
+}
+
+function bannir(){
+  const t = S.tour;
+  t.bannissements++;
+  t.coupDuBannissement = String(t.coups.length + 1);
+  resoudre("indice banni", t.arbitre);
+}
+
+/* ── Résolution ────────────────────────────────────────────── */
+
+function resoudre(issue, equipeQuiMarque){
+  avantResolution = structuredClone({equipes:S.equipes, tour:S.tour, log:S.log,
+                                     ouvreur:S.ouvreur, finArmee:S.finArmee});
+  const t = S.tour;
+  t.issue = issue;
+  t.equipeQuiMarque = equipeQuiMarque;
+  t.coupDeFin = issue === "indice banni" ? "—" : String(t.coups.length);
+
+  equipe(equipeQuiMarque).score += t.motChoisi.valeur;
+
+  // La rotation du donneur de l'équipe preneuse est consommée dans tous les cas.
+  equipe(t.preneuse).donneur = 1 - equipe(t.preneuse).donneur;
+
+  journaliser();
+
+  // Rotation du droit d'ouverture.
+  let prochainOuvreur = t.vol ? t.preneuse : adverse(t.ouvreur);
+
+  // Franchissement de 100 : l'autre équipe ouvre le tour suivant quoi qu'il arrive.
+  const franchit = S.equipes.findIndex(e => e.score >= OBJECTIF);
+  t.finDePartie = false;
+  if(S.finArmee){
+    t.finDePartie = true;                                 // le dernier tour vient d'être joué
+  } else if(franchit !== -1){
+    S.finArmee = true;
+    prochainOuvreur = adverse(franchit);
+  }
+  S.ouvreur = prochainOuvreur;
+
+  aller("resolution");
+}
+
+function annulerResolution(){
+  if(!avantResolution) return;
+  Object.assign(S, structuredClone(avantResolution));
+  avantResolution = null;
+  aller("arbitre");
+}
+
+function continuer(){
+  const t = S.tour;
+  if(t.finDePartie){
+    // Égalité au terme du dernier tour : on rejoue un tour de plus.
+    if(S.equipes[0].score === S.equipes[1].score){ S.finArmee = false; return demarrerTour(); }
+    return aller("fin");
+  }
+  demarrerTour();
+}
+
+function journaliser(){
+  const t = S.tour;
+  S.log.push({
+    tour:S.numeroTour,
+    ouvreur:equipe(t.ouvreur).nom,
+    donneur:t.donneurOuvreur.nom,
+    mot:t.motChoisi.mot,
+    valeur:t.motChoisi.valeur,
+    pariOuverture:t.pariOuverture,
+    contre:t.vol ? "o" : "n",
+    pariRetenu:t.pariRetenu,
+    preneuse:equipe(t.preneuse).nom,
+    donneurRetenu:t.donneurRetenu.nom,
+    issue:t.issue,
+    coupDeFin:t.coupDeFin,
+    points:equipe(t.equipeQuiMarque).nom,
+    mainVol:t.vol ? "o" : "n",
+    bannissements:t.bannissements,
+    coupBannissement:t.coupDuBannissement || "—"
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   4. Rendu
+   ═══════════════════════════════════════════════════════════ */
+
+const app = document.getElementById("app");
+const ech = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function aller(ecran){ S.ecran = ecran; rendre(); }
+
+function rendre(){
+  const vues = {
+    reglages, tirage, choix, tamponOuverture, contre, tamponVol,
+    arbitre, resolution, fin, journal
+  };
+  app.innerHTML = vues[S ? S.ecran : "reglages"]();
+  app.scrollTop = 0;
+}
+
+// Bandeau de score — présent partout sauf tampon, tirage au sort, fin de partie.
+function bandeau(){
+  const [a,b] = S.equipes;
+  const av = e => e.joueurs.map(j => j.avatar).join("");
+  const mene = e => e.score >= OBJECTIF ? ' gagne' : '';
+  return `
+  <div class="bandeau">
+    <div class="moitie gauche${mene(a)}">
+      <span class="avatars">${av(a)}</span>
+      <span class="points">${a.score}</span>${a.score>=OBJECTIF?'<span class="flamme">🔥</span>':''}
+    </div>
+    <div class="moitie droite${mene(b)}">
+      ${b.score>=OBJECTIF?'<span class="flamme">🔥</span>':''}<span class="points">${b.score}</span>
+      <span class="avatars">${av(b)}</span>
+    </div>
+  </div>`;
+}
+
+/* ── Réglages ─────────────────────────────────────────────── */
+
+let brouillon = structuredClone(DEFAUT);
+
+function reglages(){
+  const bloc = (ei) => {
+    const e = brouillon.equipes[ei];
+    return `
+    <div class="bloc-equipe ${e.couleur}">
+      <div class="etiquette">Équipe ${ei+1} — ${e.couleur}</div>
+      <div class="champ"><input data-champ="equipe" data-e="${ei}" value="${ech(e.nom)}" maxlength="24" aria-label="Nom de l'équipe ${ei+1}"></div>
+      ${e.joueurs.map((j,ji) => `
+        <div class="champ">
+          <span style="font-size:28px">${j.avatar}</span>
+          <input data-champ="joueur" data-e="${ei}" data-j="${ji}" value="${ech(j.nom)}" maxlength="16" aria-label="Nom du joueur">
+        </div>
+        <div class="emojis">
+          ${AVATARS.map(a => `<button data-act="avatar" data-e="${ei}" data-j="${ji}" data-a="${a}" class="${a===j.avatar?'actif':''}">${a}</button>`).join("")}
+        </div>`).join("")}
+    </div>`;
+  };
+  return `
+  <div class="ecran" style="padding-top:calc(14px + env(safe-area-inset-top))">
+    <h1 class="titre" style="font-size:34px">Kowo</h1>
+    <p class="sous">Deux équipes de deux. Premier à ${OBJECTIF}.</p>
+    ${bloc(0)}${bloc(1)}
+    <div class="pousse"></div>
+    <button class="btn" data-act="commencer">Tirer au sort</button>
+  </div>`;
+}
+
+/* ── Tirage au sort — plein écran, sans bandeau ───────────── */
+
+function tirage(){
+  if(S.ouvreur === null){
+    return `
+    <div class="ecran plein nuit">
+      <div class="emoji-paire">🍄🐗</div>
+      <h1 class="titre" style="margin-top:24px">Qui ouvre ?</h1>
+      <p class="sous">Tape pour tirer au sort.</p>
+      <div style="height:28px"></div>
+      <button class="btn creme" data-act="tirer" style="max-width:280px">Tirer</button>
+    </div>`;
+  }
+  const e = equipe(S.ouvreur);
+  return `
+  <div class="ecran plein ${e.couleur}">
+    <div class="emoji-paire">${e.joueurs.map(j=>j.avatar).join("")}</div>
+    <h1 class="titre" style="font-size:32px;margin-top:24px">${ech(e.nom)}</h1>
+    <p class="sous" style="opacity:.9">ouvre la partie.</p>
+    <div style="height:28px"></div>
+    <button class="btn creme" data-act="premierTour" style="max-width:280px">C'est parti</button>
+  </div>`;
+}
+
+/* ── 1. Choix du mot et pari — un seul écran ──────────────── */
+
+function choix(){
+  const t = S.tour;
+  const e = equipe(t.ouvreur);
+  const choisi = t.motChoisi;
+  return `
+  ${bandeau()}
+  <div class="ecran">
+    <p class="legende" style="margin-top:0">${ech(donneurDe(t.ouvreur).avatar)} ${ech(donneurDe(t.ouvreur).nom)} — ${ech(e.nom)} · choisis ton mot</p>
+    <div class="mots ${choisi ? "a-choisi":""}">
+      ${t.tirage.map((m,i) => `
+        <button class="mot ${choisi && choisi.mot===m.mot ? "actif":""}" data-act="mot" data-i="${i}">
+          <span>${ech(m.mot)}</span><span class="valeur">${m.valeur} pts</span>
+        </button>`).join("")}
+    </div>
+    <p class="legende">Combien d'indices te suffisent ?</p>
+    <div class="paris">
+      ${[1,2,3].map(n => `<button class="btn ${e.couleur}" data-act="parier" data-n="${n}" ${choisi?"":"disabled"}>${n}</button>`).join("")}
+    </div>
+  </div>`;
+}
+
+/* ── 2. Tampon d'ouverture — individuel, avec serment ─────── */
+
+function tamponOuverture(){
+  const t = S.tour;
+  const eqAdv = equipe(adverse(t.ouvreur));
+  const d = t.donneurAdverse;
+  return `
+  <div class="ecran plein ${eqAdv.couleur}">
+    <div class="emoji-geant">${d.avatar}</div>
+    <h1 class="titre" style="font-size:32px;margin-top:26px">Passe le téléphone<br>à ${ech(d.nom)}</h1>
+    <p class="sous" style="opacity:.9">${ech(eqAdv.nom)}</p>
+    <div class="pousse"></div>
+    <button class="btn creme" data-act="serment">Je suis ${ech(d.nom)}, je jure<br>de ne rien avoir vu</button>
+  </div>`;
+}
+
+/* ── 3. Contre — écran de mémorisation ────────────────────── */
+/* Le mot n'entre dans le DOM qu'ici, c'est-à-dire après le serment. */
+
+function contre(){
+  const t = S.tour;
+  const eqOuv = equipe(t.ouvreur);
+  const eqAdv = equipe(adverse(t.ouvreur));
+  const bouton = n => {
+    const possible = n < t.pariOuverture;
+    return `<button class="btn ${eqAdv.couleur}" data-act="voler" data-n="${n}" ${possible?"":"disabled"}>Voler ${n}</button>`;
+  };
+  return `
+  ${bandeau()}
+  <div class="ecran">
+    <div class="pousse" style="display:flex;flex-direction:column;justify-content:center">
+      <p class="mot-cible">${ech(t.motChoisi.mot)}</p>
+      <p class="mot-valeur">${t.motChoisi.valeur} points</p>
+      <p class="memo">Mémorise-le.<br>Tu ne le reverras plus.</p>
+      <p class="pari-adverse">${ech(eqOuv.nom)}<br>parie ${t.pariOuverture}</p>
+    </div>
+    <div class="trio">
+      <button class="btn creme" data-act="laisser">Laisser</button>
+      ${bouton(2)}${bouton(1)}
+    </div>
+  </div>`;
+}
+
+/* ── Tampon de vol — collectif, sans serment ──────────────── */
+
+function tamponVol(){
+  const t = S.tour;
+  const eq = equipe(t.arbitre);
+  return `
+  <div class="ecran plein ${eq.couleur}">
+    <div class="emoji-paire">${eq.joueurs.map(j=>j.avatar).join("")}</div>
+    <h1 class="titre" style="font-size:30px;margin-top:26px">Le téléphone passe<br>aux ${ech(eq.nom)}</h1>
+    <p class="sous" style="opacity:.9">Volé à ${t.pariRetenu} indice${t.pariRetenu>1?"s":""}.</p>
+    <div class="pousse"></div>
+    <button class="btn creme" data-act="nousArbitrons">Nous arbitrons</button>
+  </div>`;
+}
+
+/* ── 5. Écran arbitre — une seule question ────────────────── */
+
+function arbitre(){
+  const t = S.tour;
+  const eqPren = equipe(t.preneuse);
+  const eqArb  = equipe(t.arbitre);
+  const braises = Array.from({length:t.pariRetenu}, (_,i) =>
+    i < t.braises ? "🔥" : '<span class="morte">🕯️</span>').join("");
+  return `
+  ${bandeau()}
+  <div class="ecran">
+    <div class="barre-outils">
+      <span class="braises">${braises}</span>
+      <button class="outil" data-act="annulerVerdict" ${t.coups.length?"":"disabled"}>annuler</button>
+      <button class="outil oeil" data-act="oeil">👁</button>
+    </div>
+
+    <button class="parchemin bannir" data-act="demanderBan">
+      <span class="pastille">⛔</span> banni — le mot, sa famille,
+      plus d'un mot, les gestes
+    </button>
+
+    <div class="question">La réponse de ${ech(t.devineurRetenu.nom)} ?</div>
+
+    <p class="legende">${ech(t.donneurRetenu.avatar)} ${ech(t.donneurRetenu.nom)} donne · ${ech(eqPren.nom)} joue ${t.motChoisi.valeur} pts · ${ech(eqArb.nom)} arbitre</p>
+
+    <div class="verdicts">
+      <button class="btn lichen" data-act="trouve">TROUVÉ</button>
+      <button class="btn braise" data-act="rate">RATÉ</button>
+    </div>
+  </div>`;
+}
+
+/* ── Confirmation de bannissement — plein écran ───────────── */
+
+function confirmationBan(){
+  const t = S.tour;
+  const eqArb = equipe(t.arbitre);
+  const el = document.createElement("div");
+  el.className = "confirme";
+  el.innerHTML = `
+    <div class="emoji-geant" style="font-size:72px">⛔</div>
+    <h1 class="titre" style="font-size:28px">Indice banni</h1>
+    <p class="sous" style="opacity:.95;color:#fff">Le tour s'arrête,<br>+${t.motChoisi.valeur} pour ${ech(eqArb.nom)}</p>
+    <div style="height:10px"></div>
+    <button class="btn creme" data-act="confirmerBan">Confirmer</button>
+    <button class="btn fantome" data-act="retourBan">Retour</button>`;
+  return el;
+}
+
+/* ── 6. Résolution ────────────────────────────────────────── */
+
+function resolution(){
+  const t = S.tour;
+  const eq = equipe(t.equipeQuiMarque);
+  const prochain = t.finDePartie ? null : donneurDe(S.ouvreur);
+  const libelle = {
+    "trouvé":"Trouvé !",
+    "quota épuisé":"Quota épuisé",
+    "indice banni":"Indice banni"
+  }[t.issue];
+  return `
+  ${bandeau()}
+  <div class="ecran">
+    <div class="pousse" style="display:flex;flex-direction:column;justify-content:center;text-align:center">
+      <div class="emoji-paire">${eq.joueurs.map(j=>j.avatar).join("")}</div>
+      <h1 class="titre" style="font-size:34px;margin-top:20px">${libelle}</h1>
+      <p class="sous">Le mot était <strong>${ech(t.motChoisi.mot)}</strong>.</p>
+      <p style="font-size:44px;margin:18px 0 0">+${t.motChoisi.valeur}</p>
+      <p class="sous">pour ${ech(eq.nom)}</p>
+      ${prochain ? `<p class="legende" style="margin-top:26px">Passe le téléphone à ${ech(prochain.avatar)} ${ech(prochain.nom)} — ${ech(equipe(S.ouvreur).nom)}</p>` : ""}
+    </div>
+    <button class="btn" data-act="continuer">${t.finDePartie ? "Fin de partie" : "Tour suivant"}</button>
+    <div class="rangee centre" style="justify-content:center;margin-top:6px">
+      <button class="lien" data-act="annulerResolution">annuler le dernier verdict</button>
+      <button class="lien" data-act="journal">log</button>
+    </div>
+  </div>`;
+}
+
+/* ── Fin de partie — plein écran, sans bandeau ────────────── */
+
+function fin(){
+  const gagnante = S.equipes[0].score > S.equipes[1].score ? S.equipes[0] : S.equipes[1];
+  const perdante = gagnante === S.equipes[0] ? S.equipes[1] : S.equipes[0];
+  return `
+  <div class="ecran plein ${gagnante.couleur}">
+    <div class="emoji-paire">${gagnante.joueurs.map(j=>j.avatar).join("")}</div>
+    <h1 class="titre" style="font-size:34px;margin-top:24px">${ech(gagnante.nom)}</h1>
+    <p class="sous" style="opacity:.95">l'emportent</p>
+    <p style="font-size:58px;margin:18px 0 0">${gagnante.score} · ${perdante.score}</p>
+    <p class="sous" style="opacity:.85">en ${S.numeroTour} tours</p>
+    <div style="height:30px"></div>
+    <button class="btn creme" data-act="journal" style="max-width:300px">Voir le log</button>
+    <div style="height:10px"></div>
+    <button class="btn fantome" data-act="rejouer" style="max-width:300px">Rejouer</button>
+  </div>`;
+}
+
+/* ── Log de debug ─────────────────────────────────────────── */
+
+const COLONNES = [
+  ["tour","n° tour"],["ouvreur","équipe qui ouvre"],["donneur","donneur"],["mot","mot"],
+  ["valeur","valeur"],["pariOuverture","pari d'ouverture"],["contre","contré"],
+  ["pariRetenu","pari retenu"],["preneuse","équipe preneuse"],["donneurRetenu","donneur retenu"],
+  ["issue","issue"],["coupDeFin","coup de fin"],["points","points attribués à"],
+  ["mainVol","main conservée par vol"],["bannissements","nb bannissements"],
+  ["coupBannissement","coup du bannissement"]
+];
+
+function journal(){
+  const bannis = S.log.reduce((n,l) => n + l.bannissements, 0);
+  return `
+  <div class="ecran log">
+    <h1 class="titre">Log de debug</h1>
+    <p class="sous">${S.log.length} tours · ${bannis} bannissement${bannis>1?"s":""}</p>
+    <div class="defile">
+      <table>
+        <thead><tr>${COLONNES.map(c => `<th>${c[1]}</th>`).join("")}</tr></thead>
+        <tbody>
+          ${S.log.map(l => `<tr>${COLONNES.map(c => `<td>${ech(l[c[0]])}</td>`).join("")}</tr>`).join("")}
+        </tbody>
+      </table>
+    </div>
+    <div class="pousse"></div>
+    <button class="btn creme" data-act="copierLog">Copier en TSV</button>
+    <div style="height:10px"></div>
+    <button class="btn" data-act="retourLog">Retour</button>
+  </div>`;
+}
+
+function tsv(){
+  const lignes = [COLONNES.map(c => c[1]).join("\t")];
+  for(const l of S.log) lignes.push(COLONNES.map(c => l[c[0]]).join("\t"));
+  return lignes.join("\n");
+}
+
+/* ═══════════════════════════════════════════════════════════
+   5. Interactions
+   ═══════════════════════════════════════════════════════════ */
+
+let ecranAvantLog = null;
+
+app.addEventListener("click", ev => {
+  const cible = ev.target.closest("[data-act]");
+  if(!cible) return;
+  const act = cible.dataset.act;
+
+  switch(act){
+    case "avatar":
+      brouillon.equipes[+cible.dataset.e].joueurs[+cible.dataset.j].avatar = cible.dataset.a;
+      lireChamps(); rendre(); break;
+
+    case "commencer":
+      lireChamps(); nouvellePartie(brouillon); rendre(); break;
+
+    case "tirer":
+      S.ouvreur = Math.random() < .5 ? 0 : 1; rendre(); break;
+
+    case "premierTour": demarrerTour(); break;
+
+    case "mot":    choisirMot(+cible.dataset.i); break;
+    case "parier": parier(+cible.dataset.n); break;
+    case "serment": aller("contre"); break;
+    case "laisser": laisser(); break;
+    case "voler":   voler(+cible.dataset.n); break;
+    case "nousArbitrons": aller("arbitre"); break;
+
+    case "trouve": verdict(true);  break;
+    case "rate":   verdict(false); break;
+    case "annulerVerdict": annulerDernierVerdict(); break;
+
+    case "demanderBan":  app.appendChild(confirmationBan()); break;
+    case "retourBan":    cible.closest(".confirme").remove(); break;
+    case "confirmerBan": cible.closest(".confirme").remove(); bannir(); break;
+
+    case "continuer": continuer(); break;
+    case "annulerResolution": annulerResolution(); break;
+
+    case "journal": ecranAvantLog = S.ecran; aller("journal"); break;
+    case "retourLog": aller(ecranAvantLog || "fin"); break;
+    case "copierLog":
+      navigator.clipboard?.writeText(tsv()).then(
+        () => { cible.textContent = "Copié ✓"; },
+        () => { cible.textContent = "Copie refusée"; });
+      break;
+
+    case "rejouer": S = null; brouillon = structuredClone(DEFAUT); rendre(); break;
+  }
+});
+
+// Le bouton 👁 : le mot ne s'affiche que tant que l'appui est maintenu.
+app.addEventListener("pointerdown", ev => {
+  const oeil = ev.target.closest('[data-act="oeil"]');
+  if(!oeil) return;
+  ev.preventDefault();
+  oeil.setPointerCapture?.(ev.pointerId);
+  const voile = document.createElement("div");
+  voile.className = "voile";
+  voile.id = "voile";
+  voile.innerHTML = `<div>${ech(S.tour.motChoisi.mot)}</div><small>${S.tour.motChoisi.valeur} points · relâche pour cacher</small>`;
+  document.body.appendChild(voile);
+});
+["pointerup","pointercancel","pointerleave"].forEach(t =>
+  app.addEventListener(t, () => document.getElementById("voile")?.remove()));
+
+// Les champs de réglage ne survivent pas au re-rendu : on les relit avant.
+function lireChamps(){
+  app.querySelectorAll("[data-champ]").forEach(input => {
+    const v = input.value.trim();
+    if(!v) return;
+    if(input.dataset.champ === "equipe") brouillon.equipes[+input.dataset.e].nom = v;
+    else brouillon.equipes[+input.dataset.e].joueurs[+input.dataset.j].nom = v;
+  });
+}
+
+rendre();
+</script>
+</body>
+</html>
