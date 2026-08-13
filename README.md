@@ -48,6 +48,12 @@ changement d'écran.** Un pari à 1 coup est *involable*.
 Individuel, avec serment : « Je suis Tibiane, je jure de ne rien avoir vu ». Le
 mot n'entre dans le DOM qu'**après** ce tap.
 
+**Sauf sur un pari à 1 coup.** Il est involable : le donneur adverse n'a aucune
+décision à prendre, donc aucune raison de voir le mot. On saute le serment *et*
+l'écran de contre — le téléphone file directement à la paire adverse, qui
+arbitre, par le tampon collectif. Un tour à 1 coup tient en **4 taps** : le mot,
+le pari, « Nous arbitrons », le verdict.
+
 ### 3. Contre — écran de mémorisation
 
 C'est le **seul** moment où le donneur adverse voit le mot. S'il vole, il ne le
@@ -57,11 +63,14 @@ grisés.
 
 ### 4. Après le contre
 
-| | Sans vol | Avec vol |
-| --- | --- | --- |
-| Qui arbitre | l'équipe qui a contré | l'équipe volée |
-| Passage de téléphone | **0** | **1** — tampon collectif, sans serment |
-| Écran suivant | l'arbitrage, directement | tampon de vol → arbitrage |
+| | Pari à 1 | Sans vol | Avec vol |
+| --- | --- | --- | --- |
+| Qui arbitre | l'équipe adverse | l'équipe qui a contré | l'équipe volée |
+| Passages sur le tour | **1** | **1** | **2** |
+| Écrans sautés | serment + contre | — | — |
+
+Le nombre de passages ne se déduit pas du vol mais de l'endroit où se trouve
+réellement l'appareil : s'il est déjà dans le camp qui arbitre, il ne bouge pas.
 
 Il n'y a **pas d'écran de révélation** : le donneur retenu connaît toujours le
 mot, soit qu'il l'ait choisi, soit qu'il l'ait mémorisé au contre.

@@ -617,6 +617,8 @@ const E = {
   resultat: null,
   tampon: null,
   tamponTeinte: null,
+  tamponChez: null,
+  telephoneChez: null,           // equipe qui tient l'appareil, en ce moment
   braises: 0,
   coup: 1,
   annulable: false,
@@ -769,6 +771,7 @@ function tireLaMain(){
 function ouvreLeTour(){
   const op = E.ouvreur;
   E.t = { ouvreur: op, donneurOuv: donneur(op), bans: 0, coupBan: null };
+  E.telephoneChez = op;
   E.propositions = tireLaMain();
   E.motChoisi = null;
   dessineChoix();
@@ -815,6 +818,12 @@ function annoncePari(n){
   E.t.val = w.v;
   E.t.pariOuv = n;
 
+  /* Un pari a 1 coup est involable : le donneur adverse n'a aucune decision a
+     prendre, et il n'a donc aucune raison de voir le mot. On saute le tampon
+     individuel et l'ecran de contre - le telephone ira directement a la paire
+     adverse, qui arbitre, par le tampon collectif de trancheLeContre(). */
+  if (n === 1){ trancheLeContre(false, 0); return; }
+
   const adv = autre(E.t.ouvreur);
   const d   = donneur(adv);
   const a   = avatar(d);
@@ -822,6 +831,7 @@ function annoncePari(n){
 
   E.tampon = dessineContre;
   E.tamponTeinte = adv;
+  E.tamponChez = adv;
   el("tp-emoji").textContent = a.emoji;
   el("tp-titre").textContent = "Passe le téléphone à " + a.nom;
   el("b-serment").textContent = "Je suis " + a.nom + ", je jure de ne rien avoir vu";
@@ -862,10 +872,14 @@ function trancheLeContre(vol, n){
   E.coup      = 1;
   E.annulable = false;
 
-  if (!vol){ dessineArbitrage(); return; }
+  /* Le telephone est-il deja dans le camp qui arbitre ? Sans vol apres un
+     contre, oui : aucun passage. Apres un vol, ou apres un pari involable,
+     non : il doit rejoindre les arbitres. */
+  if (E.telephoneChez === t.arbitre){ dessineArbitrage(); return; }
 
   E.tampon = dessineArbitrage;
   E.tamponTeinte = t.arbitre;
+  E.tamponChez = t.arbitre;
   el("tv-avatars").textContent = E.equipes[t.arbitre].map((id) => avatar(id).emoji).join("");
   el("tv-titre").textContent   = "Le téléphone passe aux " + sansArt(t.arbitre);
   va("s-tampon-vol", t.arbitre);
@@ -1038,12 +1052,12 @@ tap("b-commencer",    commence);
 tap("b-changer",      () => { if (E.reprise){ E.choix = []; E.reprise = false; } else E.choix.pop(); dessineMiseEnPlace(); });
 tap("b-ouvrir",       ouvreLeTour);
 [1,2,3].forEach((n) => tap("b-pari-" + n, () => annoncePari(n)));
-tap("b-serment",      () => { const suite = E.tampon; E.tampon = null; if (suite) suite(); });
+tap("b-serment",      confirmeTampon);
 tap("b-laisser",      () => trancheLeContre(false, 0));
 [1,2].forEach((n) => tap("b-voler-" + n, () => {
   if (VOL_AUTORISE && n < E.t.pariOuv) trancheLeContre(true, n);
 }));
-tap("b-nous-arbitrons", () => { const suite = E.tampon; E.tampon = null; if (suite) suite(); });
+tap("b-nous-arbitrons", confirmeTampon);
 tap("b-annuler",      annule);
 tap("b-trouve",       () => conclut("trouvé", E.t.preneur));
 tap("b-rate",         rateLaReponse);
@@ -1055,6 +1069,14 @@ tap("b-rejouer",      () => { E.reprise = true; dessineConfirmation(); });
 tap("b-copier",       copieLog);
 tap("b-fermer-log",   () => { const r = retourLog; retourLog = null; (r || dessineMiseEnPlace)(); });
 tap("debug-open",     () => { if (ecranCourant !== "s-debug"){ retourLog = redessineCourant(); dessineLog(); } });
+
+/* Un tampon confirme, c'est l'appareil qui a change de camp. */
+function confirmeTampon(){
+  const suite = E.tampon;
+  E.tampon = null;
+  if (E.tamponChez) E.telephoneChez = E.tamponChez;
+  if (suite) suite();
+}
 
 /* Rendu de l'ecran courant, pour revenir du log exactement ou on etait. */
 function redessineCourant(){
