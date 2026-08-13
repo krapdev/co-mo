@@ -773,11 +773,39 @@ function tireLaMain(){
    ============================================================ */
 function ouvreLeTour(){
   const op = E.ouvreur;
-  E.t = { ouvreur: op, donneurOuv: donneur(op), bans: 0, coupBan: null };
-  E.telephoneChez = op;
+  const d  = donneur(op);
+  E.t = { ouvreur: op, donneurOuv: d, bans: 0, coupBan: null };
+  E.telephoneChez = null;                 // en transit
   E.propositions = tireLaMain();
   E.motChoisi = null;
-  dessineChoix();
+
+  /* On vide les porteurs de secret du tour precedent : les quatre mots
+     ecartes n'ont jamais ete reveles et n'ont rien a faire dans le DOM,
+     meme sur un ecran masque. */
+  el("ch-mots").innerHTML = "";
+  el("co-mot").textContent = "";
+  el("ar-mot").textContent = "";
+
+  /* Le telephone sort des mains des arbitres du tour precedent : il doit
+     rejoindre nommement le donneur d'ouverture. Son coequipier devinera,
+     et ne doit donc voir ni les cinq mots, ni celui qui sera retenu. Les
+     propositions n'entrent dans le DOM qu'apres ce serment. */
+  const co = E.equipes[op].filter((x) => x !== d)[0];
+  tamponIndividuel(op, d, "Je suis " + avatar(d).nom + ", " + avatar(co).nom + " ne regarde pas",
+                   dessineChoix);
+}
+
+/* Tampon nominatif : l'appareil doit atterrir dans une main precise, pas
+   seulement dans un camp. C'est l'identite affirmee qui protege le secret. */
+function tamponIndividuel(equipe, avatarId, serment, suite){
+  const a = avatar(avatarId);
+  E.tampon = suite;
+  E.tamponTeinte = equipe;
+  E.tamponChez = equipe;
+  el("tp-emoji").textContent  = a.emoji;
+  el("tp-titre").textContent  = "Passe le téléphone à " + a.nom;
+  el("b-serment").textContent = serment;
+  va("s-tampon", equipe);
 }
 
 function dessineChoix(){
@@ -829,16 +857,10 @@ function annoncePari(n){
 
   const adv = autre(E.t.ouvreur);
   const d   = donneur(adv);
-  const a   = avatar(d);
   E.t.donneurAdv = d;
 
-  E.tampon = dessineContre;
-  E.tamponTeinte = adv;
-  E.tamponChez = adv;
-  el("tp-emoji").textContent = a.emoji;
-  el("tp-titre").textContent = "Passe le téléphone à " + a.nom;
-  el("b-serment").textContent = "Je suis " + a.nom + ", je jure de ne rien avoir vu";
-  va("s-tampon", adv);
+  tamponIndividuel(adv, d, "Je suis " + avatar(d).nom + ", je jure de ne rien avoir vu",
+                   dessineContre);
 }
 
 /* ============================================================

@@ -36,25 +36,34 @@ de partie**.
 
 ## Le tour
 
-### 1. Choix du mot et pari — un seul écran
+### 1. Appel du donneur — le tour ne s'ouvre pas tout seul
 
-Le donneur de l'équipe qui ouvre voit 5 mots tirés sans remise sur toute la
-partie. Un tap illumine un mot et estompe les autres ; les trois boutons de pari
-(`1`, `2`, `3`), en bas du **même** écran, s'activent alors. **Deux taps, aucun
-changement d'écran.** Un pari à 1 coup est *involable*.
+En fin de tour l'appareil est chez les arbitres. Il doit rejoindre **nommément**
+le donneur d'ouverture, parce que son coéquipier devinera : « Passe le téléphone
+à Tibiane » / « Je suis Tibiane, Grognemousse ne regarde pas ».
 
-### 2. Tampon d'ouverture — le seul passage obligatoire
+Les cinq mots **n'entrent dans le DOM qu'après ce serment** — ils ne sont pas
+seulement masqués, ils n'existent pas encore. Les porteurs de secret du tour
+précédent sont vidés au passage : les quatre mots écartés n'ont jamais été
+révélés et n'ont rien à faire dans la page.
 
-Individuel, avec serment : « Je suis Tibiane, je jure de ne rien avoir vu ». Le
-mot n'entre dans le DOM qu'**après** ce tap.
+### 2. Choix du mot et pari — un seul écran
+
+Le donneur voit 5 mots tirés sans remise sur toute la partie. Un tap illumine un
+mot et estompe les autres ; les trois boutons de pari (`1`, `2`, `3`), en bas du
+**même** écran, s'activent alors. **Deux taps, aucun changement d'écran.** Un
+pari à 1 coup est *involable*.
+
+### 3. Tampon vers le donneur adverse
+
+Individuel, avec serment : « Je suis Tibiane, je jure de ne rien avoir vu ».
 
 **Sauf sur un pari à 1 coup.** Il est involable : le donneur adverse n'a aucune
 décision à prendre, donc aucune raison de voir le mot. On saute le serment *et*
 l'écran de contre — le téléphone file directement à la paire adverse, qui
-arbitre, par le tampon collectif. Un tour à 1 coup tient en **4 taps** : le mot,
-le pari, « Nous arbitrons », le verdict.
+arbitre, par le tampon collectif.
 
-### 3. Contre — écran de mémorisation
+### 4. Contre — écran de mémorisation
 
 C'est le **seul** moment où le donneur adverse voit le mot. S'il vole, il ne le
 reverra plus. Le mot occupe la moitié haute ; le pari adverse passe *sous* lui,
@@ -65,21 +74,22 @@ jamais au-dessus.
 mention « impossible », et l'écran rappelle la règle sous le pari adverse. Une
 ouverture à 1 ne peut donc jamais être reprise.
 
-### 4. Après le contre
+### 5. Après le contre
 
 | | Pari à 1 | Sans vol | Avec vol |
 | --- | --- | --- | --- |
 | Qui arbitre | l'équipe adverse | l'équipe qui a contré | l'équipe volée |
-| Passages sur le tour | **1** | **1** | **2** |
-| Écrans sautés | serment + contre | — | — |
+| Passages sur le tour | **2** | **2** | **3** |
+| Écrans sautés | serment adverse + contre | — | — |
 
-Le nombre de passages ne se déduit pas du vol mais de l'endroit où se trouve
-réellement l'appareil : s'il est déjà dans le camp qui arbitre, il ne bouge pas.
+Le premier passage est incompressible : l'appareil doit atterrir dans une main
+précise, pas seulement dans un camp. Les suivants se déduisent de sa position
+réelle — s'il est déjà chez les arbitres, il ne bouge pas.
 
 Il n'y a **pas d'écran de révélation** : le donneur retenu connaît toujours le
 mot, soit qu'il l'ait choisi, soit qu'il l'ait mémorisé au contre.
 
-### 5. La manche — une seule question
+### 6. La manche — une seule question
 
 Le téléphone reste chez les arbitres. Un coup = un indice dit à voix haute, une
 réponse dite à voix haute, et **un seul tap** : `Trouvé` ou `Raté`. Un `Raté`
@@ -93,7 +103,7 @@ réponse dite à voix haute, et **un seul tap** : `Trouvé` ou `Raté`. Un `Rat�
   pourtant arbitrer.
 - `Annuler` reprend le dernier `Raté` — il coûte une braise.
 
-### 6. Les points
+### 7. Les points
 
 | Issue | Les points vont |
 | --- | --- |
@@ -103,7 +113,7 @@ réponse dite à voix haute, et **un seul tap** : `Trouvé` ou `Raté`. Un `Rat�
 
 Dans les trois cas, la rotation du donneur de l'équipe preneuse est consommée.
 
-### 7. Rotation et fin
+### 8. Rotation et fin
 
 Pas de vol : l'ouverture passe à l'autre équipe. Vol : le voleur garde la main.
 Franchir `CIBLE` **n'arrête pas la partie** — cela déclenche un dernier tour,
