@@ -16,6 +16,20 @@ npm run preview    # serve the build
 npm test           # engine rule tests
 ```
 
+## Deploying to GitHub Pages
+
+The build uses a relative `base`, so it runs from any subpath — no config
+change needed for a project page at `/<repo>/`.
+
+`.github/workflows/deploy.yml` builds, tests and publishes on every push to the
+app's branch (and on manual dispatch). It needs Pages switched on once:
+
+> **Settings → Pages → Build and deployment → Source: _GitHub Actions_**
+
+Until that is set, `configure-pages` fails with "Pages is not enabled". The
+workflow's `branches:` trigger points at the current feature branch — repoint it
+at your default branch once this is merged.
+
 ## The rules
 
 A round moves through five beats.
