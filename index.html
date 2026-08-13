@@ -154,7 +154,7 @@ button{font-family:var(--font)}
 }
 #bandeau.on{display:flex}
 #bandeau .moitie{
-  flex:1;display:flex;align-items:center;gap:10px;padding:0 20px;
+  flex:1;display:flex;align-items:center;gap:14px;padding:0 20px;
   color:#fff;
 }
 #bandeau .lichen{background:var(--lichen);justify-content:flex-start}
@@ -207,9 +207,12 @@ button{font-family:var(--font)}
   line-height:1;
   letter-spacing:0;
 }
-/* Sauf les grands emoji isoles, qui n'ont personne juste dessous : leur
-   boite peut se resserrer, c'est la qu'il y a le plus de vide. */
-.geant,.avatar-xl,.tv-avatars{line-height:.92}
+/* La boite serree ne sert qu'a supprimer le vide INVISIBLE de l'interligne.
+   L'ecart au libelle, lui, est pose explicitement ci-dessous : c'est la
+   seule facon d'obtenir le meme air a 25px et a 132px. */
+.geant,.avatar-xl,.re-emoji,.tv-avatars{margin-bottom:.16em}
+.carte-eq .e{margin-bottom:.22em}
+.grid8 .btn .e{margin-bottom:.28em}
 /* Suites d'avatars : les glyphes se serrent au lieu de laisser deux blancs.
    Pas de marge compensatrice : elle poussait le dernier avatar sous le
    coin arrondi de l'appareil. */
@@ -265,7 +268,7 @@ button{font-family:var(--font)}
    ============================================================ */
 .recap{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;align-items:center;
   min-height:52px;padding:7px;border-radius:18px;background:rgba(28,18,6,.16)}
-.jeton{display:flex;align-items:center;gap:4px;padding:5px 12px 5px 8px;border-radius:99px;
+.jeton{display:flex;align-items:center;gap:8px;padding:5px 13px 5px 10px;border-radius:99px;
   font-weight:800;font-size:15px}
 .jeton .e{font-size:25px}
 .jeton.p-lichen{background:var(--lichen);color:var(--lichen-encre)}
@@ -275,6 +278,7 @@ button{font-family:var(--font)}
 .grid8{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .grid8 .btn{min-height:44px;border-radius:20px;display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:0;--face:#fffaea;--trait:rgba(61,43,22,.28)}
+.grid8 .btn .n{margin-top:0}
 .grid8 .btn .e{font-size:40px}
 .grid8 .btn .n{font-weight:800;font-size:16px;line-height:1.1}
 .grid8 .btn:disabled{--face:transparent;--label:var(--ink);--trait:currentColor;opacity:.3}
@@ -285,11 +289,11 @@ button{font-family:var(--font)}
 .titre-confirm{text-align:center;font-weight:800;font-size:30px;line-height:1.05;transform:rotate(-1deg)}
 .cf-corps{flex:1;display:flex;flex-direction:column;gap:12px}
 .carte-eq{flex:1;border-radius:24px;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:2px}
+  align-items:center;justify-content:center;gap:14px}
 .carte-eq .nom{font-weight:800;font-size:22px;line-height:1.05}
 .carte-eq .duo{display:flex;gap:18px;align-items:flex-end}
 .carte-eq .e{font-size:80px}
-.carte-eq .n{font-weight:800;font-size:16px;margin-top:2px}
+.carte-eq .n{font-weight:800;font-size:16px}
 .eq-lichen{background:var(--lichen);color:var(--lichen-encre);border:4px solid var(--lichen-fond)}
 .eq-braise{background:var(--braise);color:var(--braise-encre);border:4px solid var(--braise-fond)}
 
@@ -305,7 +309,7 @@ button{font-family:var(--font)}
 /* ============================================================
    CHOIX DU MOT ET PARI - un seul ecran, deux taps.
    ============================================================ */
-.ch-qui{display:flex;align-items:center;justify-content:center;gap:8px;flex:none;
+.ch-qui{display:flex;align-items:center;justify-content:center;gap:11px;flex:none;
   font-weight:700;font-size:18px;line-height:1.2;opacity:.75}
 .ch-qui .e{font-size:26px;flex:none}
 .mots{flex:1;display:flex;flex-direction:column;gap:8px}

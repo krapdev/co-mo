@@ -134,6 +134,17 @@ avec un trait doré épaissi.
 La seule ombre qui subsiste dans le fichier est celle du cadre d'appareil, un
 décor de bureau qui disparaît sur téléphone.
 
+### Les emoji
+
+Deux réglages distincts, souvent confondus. La **boîte** du glyphe est serrée à
+l'interligne exact — c'est ce qui supprime le vide *invisible* hérité de la
+police de texte, celui qui rend tout espacement imprévisible. L'**écart au
+libellé**, lui, est posé explicitement en `em`, jamais laissé aux métriques :
+c'est la seule façon d'obtenir le même air à 25px et à 132px.
+
+Descendre l'interligne sous 1 ne resserre rien de plus — le dessin déborde sa
+ligne et vient recouvrir le libellé.
+
 ## Éditer le corpus
 
 Tout est en haut de `index.html`, dans un bloc `<script>` isolé :
