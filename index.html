@@ -216,6 +216,7 @@ button{font-family:var(--font)}
 .pied{display:flex;gap:9px;height:110px;flex:none}
 .pied .btn{flex:1;min-height:0;height:100%;border-radius:20px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0 6px}
+.pied .btn:disabled{--face:rgba(255,250,235,.32);opacity:.5;box-shadow:none}
 .pied .chiffre{font-weight:800;font-size:44px;line-height:1}
 .pied .label{font-weight:700;font-size:14px;line-height:1.15;opacity:.85;text-align:center}
 
@@ -283,6 +284,7 @@ button{font-family:var(--font)}
 .co-val{font-weight:800;font-size:32px;line-height:1;margin-top:6px;opacity:.92}
 .co-memo{font-weight:700;font-size:21px;line-height:1.3;margin-top:22px}
 .co-pari{font-weight:800;font-size:28px;line-height:1.2;margin-top:18px;opacity:.95}
+.co-regle{font-weight:700;font-size:15px;line-height:1.25;margin-top:4px;opacity:.7}
 
 /* ============================================================
    ARBITRAGE - une seule question, deux boutons, ecran stable.
@@ -437,6 +439,7 @@ button{font-family:var(--font)}
         <div class="co-val" id="co-val"></div>
         <div class="co-memo">Mémorise-le.<br>Tu ne le reverras plus.</div>
         <div class="co-pari" id="co-pari"></div>
+        <div class="co-regle">voler, c'est annoncer strictement moins</div>
       </div>
       <div class="pied" id="co-actions">
         <button class="btn" id="b-laisser"><span class="label" style="font-size:20px">Laisser</span></button>
@@ -849,8 +852,13 @@ function dessineContre(){
   el("co-val").textContent  = t.val + " points";
   el("co-pari").textContent = court(t.ouvreur) + " parient " + t.pariOuv;
 
+  /* On ne vole qu'en annoncant strictement moins que le pari en cours :
+     a pari egal, le bouton est grise et le dit. */
   [1,2].forEach((n) => {
-    el("b-voler-" + n).disabled = !(VOL_AUTORISE && n < t.pariOuv);
+    const possible = VOL_AUTORISE && n < t.pariOuv;
+    const b = el("b-voler-" + n);
+    b.disabled = !possible;
+    b.querySelector(".label").textContent = possible ? "voler" : "impossible";
   });
 
   va("s-contre", autre(t.ouvreur));

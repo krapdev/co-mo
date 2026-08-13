@@ -58,8 +58,12 @@ le pari, « Nous arbitrons », le verdict.
 
 C'est le **seul** moment où le donneur adverse voit le mot. S'il vole, il ne le
 reverra plus. Le mot occupe la moitié haute ; le pari adverse passe *sous* lui,
-jamais au-dessus. Un seul tap pour voler, les paris égaux ou supérieurs sont
-grisés.
+jamais au-dessus.
+
+**Voler, c'est annoncer strictement moins que le pari en cours.** Jamais à pari
+égal. Un seul tap : les paris égaux ou supérieurs sont grisés et portent la
+mention « impossible », et l'écran rappelle la règle sous le pari adverse. Une
+ouverture à 1 ne peut donc jamais être reprise.
 
 ### 4. Après le contre
 
