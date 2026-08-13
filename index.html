@@ -155,15 +155,15 @@ button{font-family:var(--font)}
 }
 #bandeau.on{display:flex}
 #bandeau .moitie{
-  flex:1;display:flex;align-items:center;gap:10px;padding:0 14px;
+  flex:1;display:flex;align-items:center;gap:10px;padding:0 20px;
   color:#fff;
 }
 #bandeau .lichen{background:var(--lichen);justify-content:flex-start}
 #bandeau .braise{background:var(--braise);justify-content:flex-end}
-#bandeau .av{font-size:32px;line-height:1;letter-spacing:-2px}
+#bandeau .av{font-size:32px}
 #bandeau .pts{font-weight:800;font-size:40px;line-height:1}
 #bandeau .pts.chaud{text-shadow:0 0 0 #fff}
-#bandeau .feu{font-size:22px;line-height:1}
+#bandeau .feu{font-size:22px}
 
 /* ============================================================
    ECRANS
@@ -186,37 +186,77 @@ button{font-family:var(--font)}
    TYPOGRAPHIE
    ============================================================ */
 .kicker{font-weight:700;font-size:14px;letter-spacing:.2em;text-transform:uppercase;opacity:.78}
-.geant{font-size:110px;line-height:1}
-.avatar-xl{font-size:132px;line-height:1}
+
+/* ============================================================
+   EMOJI
+   Un glyphe emoji ne remplit qu'environ 80% de sa boite : le reste est du
+   vide de chasse et d'interligne, herite de la police de texte. Sans
+   correction il flotte au milieu d'un blanc, se decolle de son libelle,
+   et deux avatars cote a cote s'ecartent.
+   On impose la police emoji du systeme, on resserre l'interligne sous 1,
+   et les suites d'avatars se chevauchent legerement.
+   ============================================================ */
+.geant,.avatar-xl,.re-emoji,.tv-avatars,.jeton .e,.grid8 .btn .e,
+.carte-eq .e,.ch-qui .e,#bandeau .av,#bandeau .feu{
+  font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",
+              "Twemoji Mozilla",sans-serif;
+  display:block;
+  /* Interligne 1 : la boite fait exactement la taille du glyphe. En
+     dessous, le dessin deborde et recouvre le libelle qui suit - c'est
+     ce qui arrive des .95 sur les avatars de 80px. L'air se retire donc
+     dans les gouttieres, pas dans l'interligne. */
+  line-height:1;
+  letter-spacing:0;
+}
+/* Sauf les grands emoji isoles, qui n'ont personne juste dessous : leur
+   boite peut se resserrer, c'est la qu'il y a le plus de vide. */
+.geant,.avatar-xl,.tv-avatars{line-height:.92}
+/* Suites d'avatars : les glyphes se serrent au lieu de laisser deux blancs.
+   Pas de marge compensatrice : elle poussait le dernier avatar sous le
+   coin arrondi de l'appareil. */
+.tv-avatars,#bandeau .av{letter-spacing:-.09em}
+.geant{font-size:110px}
+.avatar-xl{font-size:132px}
 .titre-eq{font-weight:800;font-size:38px;line-height:1.02;margin-top:6px;transform:rotate(-1.4deg)}
 .sous{font-weight:700;font-size:25px;line-height:1.15;margin-top:2px;opacity:.92}
 
 /* ============================================================
    BOUTONS
-   Une seule forme : une face posee sur un socle plein, qui s'y
-   enfonce au doigt. Rien ne descend sous 44px de zone tactile.
+   Une face posee sur un socle - mais le socle est dessine A L'INTERIEUR
+   du bouton, en ombre incrustee. L'ancienne version le posait dessous, en
+   ombre portee : il mordait sur la gouttiere, debordait du pied d'ecran
+   et se melangeait au fond, et l'enfoncement par translation deplacait le
+   bouton hors de sa propre boite.
+   Ici la boite ne bouge jamais : on enfonce en faisant descendre le
+   contenu de la hauteur du socle, que l'on retire au meme instant.
    ============================================================ */
 .btn{
+  --socle-h:6px;
   border:none;border-radius:18px;cursor:pointer;
   font-weight:800;font-size:20px;
-  min-height:52px;padding:0 14px;
+  min-height:52px;
+  padding-inline:14px;
+  padding-block:0 var(--socle-h);
   background:var(--face,var(--creme));
   color:var(--label,var(--sombre));
-  box-shadow:0 var(--socle-h,5px) 0 var(--socle,rgba(28,18,6,.22));
+  box-shadow:inset 0 calc(0px - var(--socle-h)) 0 var(--socle,rgba(61,43,22,.22));
 }
-.btn:active:not(:disabled){transform:translateY(var(--socle-h,5px));box-shadow:0 0 0 var(--socle,rgba(28,18,6,.22))}
+.btn:active:not(:disabled){
+  box-shadow:none;
+  padding-block:var(--socle-h) 0;
+}
 .btn:disabled{cursor:default}
-.btn.plat{box-shadow:none;--face:rgba(28,18,6,.2);--label:var(--ink)}
-.btn.plat:active:not(:disabled){transform:none;box-shadow:none;filter:brightness(.94)}
-.btn.clair{--face:rgba(255,250,235,.95);--label:var(--sombre);--socle:rgba(28,18,6,.3);--socle-h:6px}
-.btn.sombre{--face:var(--sombre);--label:#f7edd4;--socle:rgba(28,18,6,.4);--socle-h:6px}
+.btn.plat{--socle-h:0px;box-shadow:none;--face:rgba(28,18,6,.2);--label:var(--ink)}
+.btn.plat:active:not(:disabled){box-shadow:none;filter:brightness(.93)}
+.btn.clair{--face:rgba(255,250,235,.95);--label:var(--sombre);--socle:rgba(61,43,22,.28)}
+.btn.sombre{--face:var(--sombre);--label:#f7edd4;--socle:rgba(0,0,0,.35)}
 .btn.grand{min-height:74px;border-radius:20px;font-size:25px}
 
 /* Rangee de boutons en pied d'ecran : pleine largeur de colonne, ~110px. */
 .pied{display:flex;gap:9px;height:110px;flex:none}
 .pied .btn{flex:1;min-height:0;height:100%;border-radius:20px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0 6px}
-.pied .btn:disabled{--face:rgba(255,250,235,.32);opacity:.5;box-shadow:none}
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding-inline:6px}
+.pied .btn:disabled{--socle-h:0px;--face:rgba(255,250,235,.32);opacity:.5;box-shadow:none}
 .pied .chiffre{font-weight:800;font-size:44px;line-height:1}
 .pied .label{font-weight:700;font-size:14px;line-height:1.15;opacity:.85;text-align:center}
 
@@ -225,17 +265,17 @@ button{font-family:var(--font)}
    ============================================================ */
 .recap{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;align-items:center;
   min-height:52px;padding:7px;border-radius:18px;background:rgba(28,18,6,.16)}
-.jeton{display:flex;align-items:center;gap:5px;padding:5px 12px 5px 7px;border-radius:99px;
+.jeton{display:flex;align-items:center;gap:4px;padding:5px 12px 5px 8px;border-radius:99px;
   box-shadow:0 3px 0 rgba(28,18,6,.25);font-weight:800;font-size:15px}
-.jeton .e{font-size:25px;line-height:1}
+.jeton .e{font-size:25px}
 .jeton.p-lichen{background:var(--lichen);color:var(--lichen-encre)}
 .jeton.p-braise{background:var(--braise);color:var(--braise-encre)}
 .vide-note{font-weight:700;font-size:16px;opacity:.6}
 .premier{text-align:center;font-weight:700;font-size:16px;line-height:1.25;opacity:.85;padding:0 6px}
 .grid8{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .grid8 .btn{min-height:44px;border-radius:20px;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:1px;--face:rgba(255,250,235,.94)}
-.grid8 .btn .e{font-size:40px;line-height:1}
+  align-items:center;justify-content:center;gap:0;--face:rgba(255,250,235,.94)}
+.grid8 .btn .e{font-size:40px}
 .grid8 .btn .n{font-weight:800;font-size:16px;line-height:1.1}
 .grid8 .btn:disabled{--face:rgba(28,18,6,.22);--label:var(--ink);opacity:.35}
 
@@ -245,13 +285,14 @@ button{font-family:var(--font)}
 .titre-confirm{text-align:center;font-weight:800;font-size:30px;line-height:1.05;transform:rotate(-1deg)}
 .cf-corps{flex:1;display:flex;flex-direction:column;gap:12px}
 .carte-eq{flex:1;border-radius:24px;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:6px}
+  align-items:center;justify-content:center;gap:2px}
 .carte-eq .nom{font-weight:800;font-size:22px;line-height:1.05}
-.carte-eq .duo{display:flex;gap:14px;align-items:flex-end}
-.carte-eq .e{font-size:80px;line-height:1}
-.carte-eq .n{font-weight:800;font-size:16px}
-.eq-lichen{background:var(--lichen);color:var(--lichen-encre);box-shadow:0 7px 0 var(--lichen-fond)}
-.eq-braise{background:var(--braise);color:var(--braise-encre);box-shadow:0 7px 0 var(--braise-fond)}
+.carte-eq .duo{display:flex;gap:18px;align-items:flex-end}
+.carte-eq .e{font-size:80px}
+.carte-eq .n{font-weight:800;font-size:16px;margin-top:2px}
+.eq-lichen{background:var(--lichen);color:var(--lichen-encre);box-shadow:inset 0 -8px 0 var(--lichen-fond)}
+.eq-braise{background:var(--braise);color:var(--braise-encre);box-shadow:inset 0 -8px 0 var(--braise-fond)}
+.carte-eq{padding-bottom:8px}
 
 /* ============================================================
    TIRAGE / TAMPONS
@@ -259,20 +300,22 @@ button{font-family:var(--font)}
 .titre-sort{font-weight:800;font-size:46px;line-height:1.02;transform:rotate(-1.5deg);padding:0 4px}
 .tp-titre{font-weight:800;font-size:34px;line-height:1.06;padding:0 6px;transform:rotate(-1deg)}
 .tp-sous{font-weight:700;font-size:19px;line-height:1.28;opacity:.9;padding:0 10px}
-.btn.serment{min-height:96px;border-radius:22px;font-size:22px;line-height:1.2;padding:12px 16px}
-.tv-avatars{font-size:96px;line-height:1;letter-spacing:-6px}
+.btn.serment{min-height:96px;border-radius:22px;font-size:22px;line-height:1.2;padding-inline:16px}
+.tv-avatars{font-size:96px}
 
 /* ============================================================
    CHOIX DU MOT ET PARI - un seul ecran, deux taps.
    ============================================================ */
-.ch-qui{text-align:center;font-weight:700;font-size:17px;line-height:1.2;opacity:.75}
+.ch-qui{display:flex;align-items:center;justify-content:center;gap:8px;flex:none;
+  font-weight:700;font-size:18px;line-height:1.2;opacity:.75}
+.ch-qui .e{font-size:26px;flex:none}
 .mots{flex:1;display:flex;flex-direction:column;gap:8px}
 .mots .btn{flex:1;border-radius:20px;display:flex;align-items:center;justify-content:space-between;
-  padding:0 16px;--socle:rgba(61,43,22,.22)}
+  padding-inline:16px;--socle:rgba(61,43,22,.22)}
 .mots .m{font-weight:800;font-size:29px}
 .mots .v{font-weight:800;font-size:19px;padding:5px 12px;border-radius:99px}
 .mots .btn.attenue{opacity:.32}
-.mots .btn.sel{--face:#fff;--socle:var(--or);--socle-h:7px;outline:3px solid var(--or);outline-offset:-3px}
+.mots .btn.sel{--face:#fff;--socle:var(--or);--socle-h:8px;outline:3px solid var(--or);outline-offset:-3px}
 .v10{background:var(--menthe);color:var(--sombre)}
 .v20{background:var(--or);color:var(--sombre)}
 .v30{background:var(--braise);color:var(--braise-encre)}
@@ -296,9 +339,9 @@ button{font-family:var(--font)}
 .braises i.vive{background:var(--braise-vive);
   box-shadow:0 0 0 4px rgba(232,100,31,.22),0 3px 8px rgba(160,60,10,.4)}
 .barre-droite{display:flex;gap:8px;align-items:center}
-.mini-btn{min-height:44px;padding:0 14px;border-radius:14px;font-weight:700;font-size:15px;
-  box-shadow:none;--face:rgba(61,43,22,.1);--label:var(--sombre)}
-.mini-btn:active:not(:disabled){transform:none;box-shadow:none;filter:brightness(.94)}
+.mini-btn{--socle-h:0px;min-height:44px;padding-inline:14px;border-radius:14px;
+  font-weight:700;font-size:15px;box-shadow:none;--face:rgba(61,43,22,.1);--label:var(--sombre)}
+.mini-btn:active:not(:disabled){box-shadow:none;filter:brightness(.93)}
 .mini-btn:disabled{opacity:.3}
 #b-oeil{min-width:56px;font-size:22px}
 
@@ -317,16 +360,16 @@ button{font-family:var(--font)}
 .ar-mot.on{display:block;font-weight:800;font-size:60px;line-height:1.05;padding:0 6px}
 .ar-mot.on + .ar-question{display:none}
 .duo-actions{display:flex;gap:10px;height:33%;flex:none}
-.duo-actions .btn{flex:1;border-radius:22px;--socle-h:7px;font-size:32px}
-#b-trouve{--face:var(--sombre);--label:#ffeec2;--socle:rgba(28,18,6,.45)}
-#b-rate{--face:var(--creme);--label:var(--sombre);--socle:rgba(61,43,22,.2);border:3px solid rgba(61,43,22,.35)}
+.duo-actions .btn{flex:1;border-radius:22px;--socle-h:8px;font-size:32px}
+#b-trouve{--face:var(--sombre);--label:#ffeec2;--socle:rgba(0,0,0,.38)}
+#b-rate{--face:var(--creme);--label:var(--sombre);--socle:rgba(61,43,22,.22);border:3px solid rgba(61,43,22,.35)}
 
 /* ============================================================
    BANNI / RESULTAT / FIN
    ============================================================ */
 .bn-titre{font-weight:800;font-size:44px;line-height:1.02;transform:rotate(-1.5deg)}
 .bn-note{font-weight:700;font-size:21px;line-height:1.28;opacity:.92;padding:0 8px}
-.re-emoji{font-size:104px;line-height:1}
+.re-emoji{font-size:104px}
 .re-ligne{font-weight:800;font-size:38px;line-height:1.04;padding:0 6px;transform:rotate(-1deg)}
 .re-points{font-weight:800;font-size:76px;line-height:1;margin-top:2px}
 .re-suite{font-weight:700;font-size:17px;line-height:1.3;opacity:.9;margin-top:16px;padding:0 6px}
@@ -810,7 +853,9 @@ function tamponIndividuel(equipe, avatarId, serment, suite){
 
 function dessineChoix(){
   const a = avatar(E.t.donneurOuv);
-  el("ch-qui").textContent = a.emoji + "  à " + a.nom + " de choisir le mot, puis de parier";
+  el("ch-qui").innerHTML = '<span class="e"></span><span class="t"></span>';
+  el("ch-qui").querySelector(".e").textContent = a.emoji;
+  el("ch-qui").querySelector(".t").textContent = a.nom + " choisit et parie";
 
   const box = el("ch-mots");
   box.innerHTML = "";
