@@ -30,13 +30,16 @@ const r = await page.evaluate((PARTIES) => {
     const attendu = E.log.reduce((a, l) => a + l.val, 0);
     if (somme !== attendu) echecs.push(`score ${somme} != mots joues ${attendu}`);
 
-    /* Reserve : un mot joue quitte son palier, les autres reviennent. */
-    for (const v of [10, 20, 30]) {
-      const joues = E.log.filter((l) => l.val === v).length;
-      if (E.reserve[v].length !== CORPUS[v].length - joues) echecs.push(`reserve[${v}] incoherente`);
-    }
     const mots = E.log.map((l) => l.mot);
     if (new Set(mots).size !== mots.length) echecs.push('un mot a ete joue deux fois');
+
+    /* Le donneur tourne pour les deux equipes concernees. Apres N tours,
+       la rotation d'une equipe vaut le nombre de fois ou elle a ouvert ou
+       joue, modulo 2. */
+    for (const k of ['lichen', 'braise']) {
+      const fois = E.log.filter((l) => l.ouvre === EQUIPES[k].court || l.preneur === EQUIPES[k].court).length;
+      if (E.rot[k] !== fois % 2) echecs.push(`rotation ${k} : ${E.rot[k]}, attendu ${fois % 2}`);
+    }
 
     const d = E.log[E.log.length - 1];
     if (d.contre === 'o' && d.pariRetenu >= d.pariOuv) echecs.push('vol non strictement plus court');
@@ -52,7 +55,7 @@ const r = await page.evaluate((PARTIES) => {
     E.reprise = false;
     commence();
 
-    let garde = 0;
+    let garde = 0, precedents = [];
     while (!E.finie && garde++ < 400) {
       ouvreLeTour();
       /* Le tour s'ouvre sur un tampon nominatif : rien du secret n'est
@@ -65,6 +68,13 @@ const r = await page.evaluate((PARTIES) => {
       let passages = 0;
       passages++; confirmeTampon();
       if (ecranCourant !== 's-choix') echecs.push("le serment d'ouverture ne mene pas au choix");
+
+      /* Catalogue melange au depart : les 5 mots du tour sont distincts, et
+         aucun ne reapparait d'un tour a l'autre. */
+      const cinq = E.propositions.map((w) => w.m);
+      if (new Set(cinq).size !== 5) echecs.push('doublon dans les 5 mots proposes');
+      if (precedents.some((m) => cinq.includes(m))) echecs.push('un mot revient au tour suivant');
+      precedents = cinq;
 
       E.motChoisi = (Math.random() * E.propositions.length) | 0;
       const p = 1 + ((Math.random() * 3) | 0);

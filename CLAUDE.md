@@ -87,6 +87,15 @@ ne peut pas entrer.
 - **Le bouton `log`** n'apparaît qu'entre les temps forts (`grille`, `confirm`,
   `tirage`, `resultat`, `fin`) : ailleurs il chevauchait une zone tactile
   décisive.
+- **Le donneur tourne pour les deux équipes concernées** — celle qui a ouvert et
+  celle qui a joué. Avant, seule l'équipe preneuse tournait : une équipe volée
+  gardait le même donneur et son coéquipier ne donnait jamais.
+- **Le catalogue est mélangé une fois au début de la partie**, puis consommé
+  dans l'ordre. Avant, chaque tour tirait 5 mots au hasard et n'en consommait
+  qu'un : les quatre écartés pouvaient revenir au tour suivant.
+- **Le bandeau de score est visible partout dès que la partie tourne**, tampons
+  compris. Le monochrome du tampon reste le signal « ne regarde pas », mais le
+  score prime — demandé explicitement.
 - **Clé de stockage `kowo.equipes.v2`.** Toutes les branches sont servies depuis
   la même origine et partagent donc le `localStorage` : ne pas réutiliser `v1`,
   qui appartient à l'ancien prototype.

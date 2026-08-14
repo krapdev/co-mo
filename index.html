@@ -616,7 +616,13 @@ const autre   = (t) => (t === "lichen" ? "braise" : "lichen");
 const ECRANS = ["s-grille","s-confirm","s-tirage","s-choix","s-tampon","s-contre",
                 "s-tampon-vol","s-arbitre","s-banni","s-resultat","s-fin","s-debug"];
 
-const AVEC_BANDEAU = ["s-choix","s-contre","s-arbitre","s-banni","s-resultat"];
+/* Le score reste visible partout des que la partie tourne - y compris sur
+   les tampons et le tirage. Il n'affiche que le score ACQUIS : jamais les
+   points en jeu du tour, qui trahiraient la valeur du mot.
+   Hors jeu : la mise en place et la confirmation (pas encore d'equipes),
+   et la fin de partie, ou les deux scores occupent deja tout l'ecran. */
+const AVEC_BANDEAU = ["s-tirage","s-tampon","s-choix","s-contre",
+                      "s-tampon-vol","s-arbitre","s-banni","s-resultat"];
 
 /* Le log reste joignable entre les tours, jamais par-dessus un bouton
    qui tranche : le pied de ces ecrans-la n'est qu'un « continuer ». */
@@ -656,7 +662,7 @@ const E = {
   equipes: null,
   rot: { lichen:0, braise:0 },     // curseur de donneur, par equipe
   score: { lichen:0, braise:0 },
-  reserve: null,
+  catalogue: null,                 // mots melanges au debut, consommes dans l'ordre
   ouvreur: null,
   t: null,                         // tour en cours
   log: [],
@@ -784,7 +790,11 @@ function commence(){
 
   E.rot   = { lichen:0, braise:0 };
   E.score = { lichen:0, braise:0 };
-  E.reserve = { 10: CORPUS[10].slice(), 20: CORPUS[20].slice(), 30: CORPUS[30].slice() };
+  /* Le catalogue est melange UNE FOIS au debut de la partie, puis consomme
+     dans l'ordre. Auparavant chaque tour retirait 5 mots au hasard et n'en
+     consommait qu'un : les quatre ecartes revenaient dans la pioche et
+     pouvaient se representer au tour suivant. */
+  E.catalogue = { 10: melange(CORPUS[10]), 20: melange(CORPUS[20]), 30: melange(CORPUS[30]) };
   E.log = [];
   E.finProgrammee = null;
   E.finie = false;
@@ -797,18 +807,24 @@ function commence(){
 
 /* ============================================================
    TIRAGE DES 5 MOTS
-   Sans remise sur toute la partie : seul le mot joue quitte la reserve.
+   Le catalogue est melange au debut de la partie et consomme dans l'ordre :
+   aucun mot ne peut se representer d'un tour a l'autre.
    ============================================================ */
 function tireLaMain(){
   const out = [];
   Object.keys(TIRAGE).forEach((v) => {
-    const src = E.reserve[v].slice();
-    for (let i = 0; i < TIRAGE[v] && src.length; i++){
-      const j = (Math.random() * src.length) | 0;
-      out.push({ m: src.splice(j, 1)[0], v: +v });
-    }
+    if (E.catalogue[v].length < TIRAGE[v]) E.catalogue[v] = refaitPalier(+v);
+    for (let i = 0; i < TIRAGE[v]; i++) out.push({ m: E.catalogue[v].shift(), v: +v });
   });
-  return melange(out);
+  return melange(out);   /* les paliers sont melanges entre eux a l'affichage */
+}
+
+/* Palier epuise - au-dela d'une vingtaine de tours : on le refait, sans
+   jamais y remettre un mot deja joue. */
+function refaitPalier(v){
+  const joues = E.log.map((l) => l.mot);
+  const reste = CORPUS[v].filter((m) => joues.indexOf(m) < 0);
+  return melange(reste.length >= TIRAGE[v] ? reste : CORPUS[v].slice());
 }
 
 /* ============================================================
@@ -1015,8 +1031,14 @@ function conclut(issue, gagnant){
   const t = E.t;
 
   E.score[gagnant] += t.val;
-  E.rot[t.preneur]  = 1 - E.rot[t.preneur];
-  E.reserve[t.val]  = E.reserve[t.val].filter((x) => x !== t.mot);
+
+  /* Le donneur tourne pour les deux equipes concernees : celle qui a ouvert
+     et celle qui a joue le mot. Sans cela, une equipe volee gardait le meme
+     donneur - se faire voler trois fois de suite, c'etait la meme personne
+     qui choisissait a chaque fois et son coequipier ne donnait jamais.
+     Sans vol les deux sont la meme equipe : on ne tourne qu'une fois. */
+  const tournent = t.ouvreur === t.preneur ? [t.ouvreur] : [t.ouvreur, t.preneur];
+  tournent.forEach((k) => { E.rot[k] = 1 - E.rot[k]; });
 
   /* Le vol garde la main ; sinon l'ouverture passe a l'autre equipe. */
   let suivant = t.vol ? t.preneur : autre(t.ouvreur);

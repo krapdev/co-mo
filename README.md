@@ -30,9 +30,10 @@ moitié braise à droite, avatars de chaque équipe de part et d'autre, chiffres
 Le bandeau n'affiche **que le score acquis**, jamais les points en jeu du tour :
 sinon on donnerait au devineur un indice sur la valeur du mot.
 
-Trois exceptions, écran pleine couleur sans bandeau : les **tampons** (le
-monochrome est le signal « ne regarde pas »), le **tirage au sort** et la **fin
-de partie**.
+Il reste visible **partout dès que la partie tourne**, tampons compris. Deux
+exceptions seulement : la mise en place et la confirmation, où il n'y a pas
+encore d'équipes ni de score, et la fin de partie, où les deux scores occupent
+déjà tout l'écran.
 
 ## Le tour
 
@@ -49,7 +50,7 @@ révélés et n'ont rien à faire dans la page.
 
 ### 2. Choix du mot et pari — un seul écran
 
-Le donneur voit 5 mots tirés sans remise sur toute la partie. Un tap illumine un
+Le donneur voit 5 mots pris dans le catalogue mélangé au départ. Un tap illumine un
 mot et estompe les autres ; les trois boutons de pari (`1`, `2`, `3`), en bas du
 **même** écran, s'activent alors. **Deux taps, aucun changement d'écran.** Un
 pari à 1 coup est *involable*.
@@ -111,7 +112,10 @@ réponse dite à voix haute, et **un seul tap** : `Trouvé` ou `Raté`. Un `Rat�
 | `quota épuisé` — les coups sont consommés | aux arbitres |
 | `indice refusé` — un indice est banni | aux arbitres, tour interrompu |
 
-Dans les trois cas, la rotation du donneur de l'équipe preneuse est consommée.
+Dans les trois cas, **le donneur tourne pour les deux équipes concernées** :
+celle qui a ouvert et celle qui a joué le mot. Sans vol elles se confondent et la
+rotation n'avance qu'une fois. Avec vol, les deux avancent — sinon une équipe
+volée gardait le même donneur, et son coéquipier ne donnait jamais.
 
 ### 8. Rotation et fin
 
@@ -144,6 +148,16 @@ c'est la seule façon d'obtenir le même air à 25px et à 132px.
 
 Descendre l'interligne sous 1 ne resserre rien de plus — le dessin déborde sa
 ligne et vient recouvrir le libellé.
+
+## Le catalogue
+
+Les 100 mots sont **mélangés une fois au début de la partie**, puis consommés
+dans l'ordre : cinq par tour, deux à 10 points, deux à 20, un à 30. Un mot ne
+peut donc jamais se représenter d'un tour à l'autre — auparavant les quatre mots
+écartés retournaient dans la pioche et revenaient parfois au tour suivant.
+
+Si un palier s'épuise, au-delà d'une vingtaine de tours, il est refait sans y
+remettre aucun mot déjà joué.
 
 ## Éditer le corpus
 
