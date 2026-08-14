@@ -171,6 +171,24 @@ obligatoire à bouton facultatif. Si le taux tombe près de zéro, l'arbitrage a
 disparu du jeu et il faudra en reparler. « Copier le log » met le tout dans le
 presse-papier en colonnes séparées par des `|`, prêt pour un tableur.
 
+## Vérifier
+
+`index.html` reste autonome, mais le dépôt porte des scripts de vérification
+dans `outils/` — jamais livrés, jamais chargés par le jeu.
+
+```bash
+cd outils && npm install
+node regles.mjs        # ~3000 tours, invariantes de règles
+node mise-en-page.mjs  # chevauchements, reliefs, écarts emoji
+node rendu.mjs         # captures 390x844 de tous les écrans
+```
+
+Toute modification des règles passe par `regles.mjs` avant d'être poussée. Il
+vérifie la conservation des points, le décompte de la réserve, l'unicité des mots
+joués, le vol strictement plus court, le budget de passages de téléphone, la
+traçabilité des bannissements, et qu'aucun mot ne traîne dans le DOM pendant un
+tampon.
+
 ## Publier
 
 Le fichier est autonome : GitHub Pages en mode « Deploy from a branch », dossier racine,

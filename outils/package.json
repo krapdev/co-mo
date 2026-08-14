@@ -1,0 +1,12 @@
+{
+  "name": "kowo-outils",
+  "private": true,
+  "type": "module",
+  "description": "Verifications du prototype Kowo. Jamais livre : index.html reste autonome.",
+  "scripts": {
+    "regles": "node regles.mjs",
+    "mise-en-page": "node mise-en-page.mjs",
+    "rendu": "node rendu.mjs"
+  },
+  "devDependencies": { "playwright": "^1.49.0" }
+}
