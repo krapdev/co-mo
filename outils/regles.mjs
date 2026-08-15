@@ -20,6 +20,30 @@ page.on('pageerror', (e) => plantages.push(e.message));
 await page.goto(JEU);
 await page.waitForTimeout(300);
 
+/* LE CORPUS — mille mots edites a la main : c'est la ou une coquille se
+   glisse. On les relit avant de jouer quoi que ce soit. */
+const corpus = await page.evaluate(() => {
+  const RACINES = ['mousse','brum','tibia','grogne','chandel','vermoul','chouette','pourri',
+                   'fougère','furie','cendre','contrari','lichen','braise'];
+  const VOCABULAIRE = ['indice','arbitre','pari','coup','tampon','serment','donneur','devineur','preneur','manche','score'];
+  const soucis = [], vus = new Map(), compte = {};
+  for (const [v, liste] of Object.entries(CORPUS)) {
+    compte[v] = liste.length;
+    for (const m of liste) {
+      if (/[\s'’-]/.test(m) || /\d/.test(m)) soucis.push(`${v} · pas un mot simple : ${m}`);
+      if (m !== m.toLowerCase())             soucis.push(`${v} · majuscule : ${m}`);
+      if (vus.has(m))                        soucis.push(`${v} · doublon (deja en ${vus.get(m)}) : ${m}`);
+      else vus.set(m, v);
+      const r = RACINES.find((x) => m.includes(x));
+      if (r)                                 soucis.push(`${v} · racine d'avatar ou d'equipe « ${r} » : ${m}`);
+      if (VOCABULAIRE.includes(m))           soucis.push(`${v} · vocabulaire du jeu : ${m}`);
+    }
+  }
+  return { soucis, compte, total: vus.size };
+});
+console.log(`corpus ${corpus.total} mots · ` + Object.entries(corpus.compte).map(([v, n]) => `${v} pts : ${n}`).join(' · '));
+if (corpus.soucis.length) console.log(' - ' + corpus.soucis.join('\n - '));
+
 const r = await page.evaluate((PARTIES) => {
   const echecs = [];
   let tours = 0, vols = 0, involables = 0, bans = 0, passagesVol = 0, passagesSansVol = 0;
@@ -206,7 +230,35 @@ const fin = await page.evaluate(() => {
 for (const c of fin) console.log(`  ${c.cas.padEnd(20)} ${c.ok ? 'ok' : 'ECHEC'}  score ${c.score.join(' / ')}`);
 const finKo = fin.filter((c) => !c.ok).length;
 
-const ko = r.echecs.length || finKo || plantages.length;
+/* L'OEIL — le mot s'affiche tant qu'on maintient, et disparait au
+   relachement. Un doigt qui glisse ne doit rien refermer : c'est le bogue
+   qu'on avait, et il ne se voit pas a la lecture du code. */
+await page.evaluate(() => {
+  E.choix = ['mousserot','brumaille','tibiane','grognemousse']; E.reprise = false; commence();
+  ouvreLeTour(); confirmeTampon(); E.motChoisi = 0; annoncePari(3); confirmeTampon(); trancheLeContre(false, 0);
+});
+const lu = () => page.evaluate(() => ({ visible: E.motVisible, texte: document.getElementById('ar-oeil').textContent }));
+await page.waitForTimeout(500);                    // le verrou anti double-tap
+const boite = await page.locator('#b-oeil').boundingBox();
+const cx = boite.x + boite.width / 2, cy = boite.y + boite.height / 2;
+const oeil = [];
+const jalon = (nom, ok) => oeil.push({ nom, ok });
+
+jalon('ferme au depart', (await lu()).texte === '👁️');
+await page.mouse.move(cx, cy);
+await page.mouse.down();
+jalon('ouvert a l\'appui', (await lu()).visible === true);
+await page.mouse.move(cx + 40, cy + 40);           // le doigt glisse, sans lacher
+jalon('reste ouvert si le doigt glisse', (await lu()).visible === true);
+await page.mouse.move(cx, boite.y + boite.height + 60);  // il sort meme du bouton
+jalon('reste ouvert hors du bouton', (await lu()).visible === true);
+await page.mouse.up();
+jalon('referme au relachement', (await lu()).visible === false);
+jalon('le glyphe revient', (await lu()).texte === '👁️');
+for (const j of oeil) console.log(`  oeil · ${j.nom.padEnd(28)} ${j.ok ? 'ok' : 'ECHEC'}`);
+const oeilKo = oeil.filter((j) => !j.ok).length;
+
+const ko = r.echecs.length || finKo || oeilKo || corpus.soucis.length || plantages.length;
 console.log(r.echecs.length ? `ECHECS :\n - ${r.echecs.join('\n - ')}` : 'toutes les invariantes tiennent');
 if (plantages.length) console.log('erreurs page :', plantages.join('\n'));
 await navigateur.close();

@@ -124,6 +124,10 @@ Tibiane donne · Grognemousse devine
   vol, le coéquipier du voleur n'a jamais vu le mot et doit pourtant arbitrer.
   **On le maintient**, on ne le tape pas : le mot ne peut jamais rester affiché
   sur un appareil posé. Le geste n'a pas d'affordance, l'écran le dit donc.
+- Le mot ne se referme qu'au **relâchement**, jamais parce que le doigt a
+  bougé : le relâchement est écouté sur la fenêtre entière, et le bouton
+  n'écoute ni `pointerleave` ni le défilement. Un doigt qui dérive de quelques
+  millimètres fermait le mot en pleine lecture.
 - Les interdits sont **énoncés en liste**, pas en phrase : on les relit d'un
   coup d'œil au moment où l'on hésite.
 - Ce rappel **est** le bouton de bannissement, disponible en permanence, jamais
@@ -195,22 +199,29 @@ c'est la seule façon d'obtenir le même air à 25px et à 132px.
 Descendre l'interligne sous 1 ne resserre rien de plus — le dessin déborde sa
 ligne et vient recouvrir le libellé.
 
-## Le catalogue
+## Le catalogue — 1000 mots
 
-Les 100 mots sont **mélangés une fois au début de la partie**, puis consommés
-dans l'ordre : cinq par tour, deux à 10 points, deux à 20, un à 30. Un mot ne
-peut donc jamais se représenter d'un tour à l'autre — auparavant les quatre mots
-écartés retournaient dans la pioche et revenaient parfois au tour suivant.
+**400 faciles (10 points), 350 moyens (20), 250 difficiles (30).** Le catalogue
+est **mélangé une fois au début de chaque partie**, puis consommé dans l'ordre :
+cinq mots par tour, deux à 10 points, deux à 20, un à 30.
 
-**Un mot n'est jamais proposé deux fois dans une même partie**, joué ou non. Si
-un palier s'épuise, il n'est pas recyclé : la main se complète depuis les autres
-paliers.
+Une partie n'en consomme qu'une centaine au plus : à mille mots, **deux parties
+ne se ressemblent pas**, et un mot déjà vu ne revient pas d'une soirée à
+l'autre. C'est ce que les 100 mots d'origine ne tenaient pas.
+
+**Un mot n'est jamais proposé deux fois dans une même partie**, joué ou non — les
+quatre mots écartés ne retournent pas dans la pioche. Si un palier s'épuise, il
+n'est pas recyclé : la main se complète depuis les autres paliers.
+
+`regles.mjs` relit le corpus avant de jouer : un seul mot, minuscules, aucun
+doublon, aucune racine partagée avec un avatar ou une équipe, aucun mot du
+vocabulaire du jeu (`indice`, `pari`, `coup`…) qui prêterait à confusion.
 
 ## Éditer le corpus
 
 Tout est en haut de `index.html`, dans un bloc `<script>` isolé :
 
-- `CORPUS` — les 100 mots par palier de points (`10`, `20`, `30`).
+- `CORPUS` — les 1000 mots par palier de points (`10`, `20`, `30`).
 - `EQUIPES` — les deux noms d'équipe, forme longue et forme courte.
 - `TIRAGE` — la composition de la main de 5 mots (par défaut 2 faciles, 2 moyens, 1 dur).
 - `CIBLE` — le score qui déclenche le dernier tour (100).

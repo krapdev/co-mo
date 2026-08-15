@@ -16,8 +16,12 @@
 
 <script>
 /* ============================================================
-   CORPUS - 100 mots. Edite librement entre deux parties.
+   CORPUS - 1000 mots (400 faciles, 350 moyens, 250 difficiles).
    Les cles sont les valeurs en points.
+
+   Il est melange une fois au debut de chaque partie, puis consomme dans
+   l'ordre : un mot n'est donc jamais propose deux fois dans la meme
+   partie, et deux parties ne se ressemblent pas.
 
    Regles si tu elargis :
    - un seul mot, au singulier, sans article ;
@@ -27,17 +31,114 @@
    - les ambiguites sont voulues (glace, sang, main).
    ============================================================ */
 const CORPUS = {
-  10: ["chat","soleil","pain","voiture","mer","neige","football","café","lune","école",
-       "chien","pizza","vélo","plage","feu","livre","dent","clé","pluie","montagne",
-       "téléphone","chaussure","glace","guerre","arbre","bébé","musique","œuf","porte","argent",
-       "nuit","poisson","fête","main","roi","sang","fleur","train","hiver","chanson"],
-  20: ["aéroport","miroir","orage","dentiste","guitare","valise","cirque","tunnel","récolte","cheminée",
-       "ascenseur","boussole","momie","naufrage","jumeau","aimant","ruche","phare","désert","moustache",
-       "labyrinthe","otage","épouvantail","bibliothèque","vaccin","marionnette","volcan","canapé","uniforme","échelle",
-       "hôpital","casserole","carnaval","squelette","grenier"],
-  30: ["nostalgie","hasard","équilibre","rumeur","patience","frontière","vertige","compromis","héritage","silence",
-       "jalousie","destin","routine","malaise","autorité","illusion","revanche","pudeur","hypocrisie","exil",
-       "mérite","absence","trahison","ennui","réputation"]
+  10: [
+       "chat","chien","cheval","vache","cochon","mouton","poule","canard","lapin","souris",
+       "rat","loup","renard","ours","lion","tigre","éléphant","girafe","singe","serpent",
+       "crocodile","tortue","grenouille","poisson","requin","baleine","dauphin","pieuvre","crabe","oiseau",
+       "aigle","pigeon","corbeau","perroquet","papillon","abeille","fourmi","araignée","escargot","hérisson",
+       "écureuil","chèvre","âne","taureau","hibou","cygne","pain","fromage","beurre","lait",
+       "œuf","riz","pizza","soupe","salade","tomate","pomme","poire","banane","fraise",
+       "cerise","raisin","orange","citron","melon","carotte","oignon","chocolat","bonbon","gâteau",
+       "tarte","crêpe","biscuit","confiture","miel","sucre","sel","poivre","huile","farine",
+       "jambon","saucisse","poulet","frite","sandwich","croissant","baguette","yaourt","glace","noix",
+       "champignon","concombre","haricot","olive","jus","thé","café","vin","eau","sirop",
+       "main","pied","tête","bras","jambe","doigt","dent","œil","oreille","nez",
+       "bouche","langue","cheveu","ongle","genou","coude","épaule","ventre","dos","cœur",
+       "cerveau","os","peau","sang","larme","joue","menton","front","lèvre","gorge",
+       "talon","porte","fenêtre","table","chaise","lit","canapé","armoire","tiroir","étagère",
+       "lampe","tapis","rideau","coussin","couverture","oreiller","drap","matelas","escalier","mur",
+       "toit","plafond","cave","garage","jardin","balcon","cuisine","chambre","salon","douche",
+       "baignoire","robinet","savon","serviette","brosse","peigne","couteau","fourchette","cuillère","verre",
+       "bol","tasse","four","balai","seau","éponge","clé","chaussure","chapeau","manteau",
+       "pantalon","chemise","robe","jupe","pull","veste","gant","chaussette","ceinture","bouton",
+       "poche","botte","casquette","cravate","pyjama","maillot","écharpe","bague","collier","parapluie",
+       "soleil","lune","étoile","ciel","nuage","pluie","neige","vent","mer","océan",
+       "plage","sable","vague","rivière","lac","montagne","colline","forêt","arbre","feuille",
+       "branche","racine","fleur","herbe","rose","pierre","rocher","terre","boue","poussière",
+       "feu","fumée","ombre","île","grotte","champ","tempête","brouillard","cascade","falaise",
+       "graine","épine","voiture","vélo","train","avion","bateau","bus","camion","moto",
+       "tracteur","hélicoptère","fusée","métro","taxi","ambulance","roue","moteur","volant","pneu",
+       "essence","route","pont","gare","port","livre","cahier","crayon","stylo","gomme",
+       "règle","ciseaux","colle","papier","craie","école","classe","élève","devoir","leçon",
+       "dessin","peinture","pinceau","carnet","calendrier","ordinateur","téléphone","écran","clavier","télévision",
+       "radio","photo","film","journal","lettre","timbre","football","ballon","but","équipe",
+       "match","course","saut","piscine","ski","patin","raquette","tennis","boxe","judo",
+       "danse","médaille","coupe","carte","puzzle","poupée","robot","corde","cible","docteur",
+       "boulanger","boucher","coiffeur","facteur","policier","pompier","pilote","marin","fermier","jardinier",
+       "cuisinier","serveur","vendeur","chauffeur","plombier","peintre","chanteur","acteur","clown","magicien",
+       "sorcière","pirate","roi","reine","prince","princesse","chevalier","géant","fantôme","dragon",
+       "argent","pièce","billet","banque","magasin","marché","prix","cadeau","fête","anniversaire",
+       "mariage","vacances","voyage","hôtel","restaurant","cinéma","musée","église","ville","maison",
+       "château","guerre","rue","jour","nuit","matin","soir","heure","minute","semaine",
+       "mois","année","été","hiver","printemps","automne","midi","minuit","musique","chanson",
+       "piano","tambour","trompette","violon","flûte","batterie","concert","micro","disque","mélodie"
+  ],
+
+  20: [
+       "aéroport","hôpital","bibliothèque","laboratoire","usine","chantier","entrepôt","casino","théâtre","opéra",
+       "stade","gymnase","patinoire","aquarium","observatoire","phare","moulin","abbaye","cathédrale","chapelle",
+       "cimetière","catacombe","donjon","forteresse","rempart","barrage","écluse","quai","carrefour","impasse",
+       "ruelle","avenue","boulevard","banlieue","quartier","oasis","canyon","glacier","cratère","geyser",
+       "récif","lagune","archipel","estuaire","delta","toundra","savane","jungle","steppe","fjord",
+       "tunnel","grenier","cheminée","puits","hangar","serre","étable","bergerie","poulailler","niche",
+       "ascenseur","boussole","aimant","échelle","brouette","tondeuse","perceuse","marteau","tournevis","scie",
+       "pince","enclume","forge","poulie","engrenage","ressort","levier","boulon","chaîne","hameçon",
+       "harpon","trident","arbalète","catapulte","bouclier","armure","casque","épée","lance","flèche",
+       "arc","fronde","poignard","fourreau","éperon","étrier","selle","bride","mors","sabot",
+       "faux","faucille","râteau","arrosoir","girouette","paratonnerre","cadran","sablier","loupe","valise",
+       "miroir","casserole","cocotte","bocal","tonneau","cruche","carafe","entonnoir","tamis","pétrin",
+       "cadenas","verrou","charnière","loquet","portemanteau","commode","buffet","paravent","lustre","veilleuse",
+       "malle","coffre","écrin","tirelire","toupie","cerceau","échasse","kaléidoscope","marionnette","épouvantail",
+       "naufrage","incendie","avalanche","séisme","éruption","inondation","sécheresse","canicule","éclipse","mirage",
+       "tornade","ouragan","typhon","tsunami","épidémie","quarantaine","famine","exode","migration","invasion",
+       "siège","embuscade","mutinerie","émeute","manifestation","grève","procès","verdict","amnistie","rançon",
+       "otage","enlèvement","évasion","poursuite","traque","sabotage","complot","alibi","empreinte","autopsie",
+       "filature","perquisition","interrogatoire","aveu","témoignage","marée","orage","déluge","tourbillon","crue",
+       "dentiste","chirurgien","vétérinaire","pharmacien","notaire","avocat","juge","huissier","archiviste","horloger",
+       "orfèvre","forgeron","charpentier","menuisier","maçon","couvreur","ramoneur","tanneur","potier","tisserand",
+       "cordonnier","apiculteur","berger","bûcheron","plongeur","scaphandrier","alpiniste","funambule","jongleur","dompteur",
+       "acrobate","trapéziste","ventriloque","illusionniste","aviateur","astronaute","sentinelle","guetteur","éclaireur","messager",
+       "ambassadeur","espion","gardien","douanier","cocher","meunier","aubergiste","herboriste","apothicaire","sacristain",
+       "guitare","orchestre","symphonie","partition","refrain","chœur","ballet","chorégraphie","sculpture","fresque",
+       "mosaïque","vitrail","tapisserie","poterie","calligraphie","gravure","esquisse","portrait","paysage","chevalet",
+       "palette","vernis","argile","marbre","bronze","plâtre","fanfare","harpe","accordéon","banjo",
+       "momie","squelette","fossile","dinosaure","mammouth","météorite","comète","galaxie","constellation","satellite",
+       "télescope","microscope","éprouvette","alambic","prisme","lentille","laser","radar","sonar","thermomètre",
+       "baromètre","sismographe","molécule","atome","cellule","bactérie","virus","vaccin","antidote","venin",
+       "sérum","étincelle","gravité","électricité","pendule","cyclone","aurore","halo","écho","reflet",
+       "carnaval","cortège","procession","parade","kermesse","tombola","loterie","enchère","brocante","foire",
+       "banquet","réveillon","baptême","fiançailles","veillée","sermon","pèlerinage","croisade","tournoi","duel",
+       "joute","blason","couronne","sceptre","trône","dynastie","héritier","uniforme","cirque","récolte",
+       "ruche","désert","moustache","labyrinthe","volcan","jumeau","potion","sortilège","talisman","amulette"
+  ],
+
+  30: [
+       "nostalgie","jalousie","orgueil","mépris","envie","avarice","générosité","égoïsme","vanité","modestie",
+       "humilité","arrogance","insolence","audace","témérité","prudence","méfiance","confiance","loyauté","fidélité",
+       "complicité","rivalité","rancune","amertume","regret","remords","culpabilité","pardon","clémence","indulgence",
+       "sévérité","rigueur","discipline","obéissance","soumission","rébellion","résistance","ténacité","obstination","persévérance",
+       "sacrifice","dévouement","compassion","pitié","indifférence","oisiveté","paresse","ferveur","enthousiasme","euphorie",
+       "sérénité","plénitude","mélancolie","tristesse","chagrin","désespoir","détresse","angoisse","effroi","terreur",
+       "panique","fureur","rage","colère","irritation","impatience","hâte","lenteur","pudeur","malaise",
+       "hasard","équilibre","rumeur","patience","vertige","compromis","héritage","silence","destin","routine",
+       "autorité","illusion","revanche","hypocrisie","exil","mérite","absence","trahison","ennui","réputation",
+       "rêverie","imagination","fantaisie","caprice","obsession","manie","phobie","paranoïa","complexe","instinct",
+       "intuition","prémonition","présage","superstition","croyance","doute","scepticisme","certitude","conviction","blasphème",
+       "rédemption","pénitence","damnation","éternité","infini","néant","chaos","harmonie","symétrie","mesure",
+       "démesure","excès","abus","tempérance","sobriété","austérité","opulence","prospérité","misère","précarité",
+       "pénurie","abondance","gaspillage","économie","épargne","dette","usure","spéculation","faillite","ruine",
+       "fortune","richesse","pauvreté","charité","philanthropie","mécénat","corruption","impunité","justice","injustice",
+       "équité","arbitraire","tyrannie","despotisme","oppression","servitude","esclavage","émancipation","liberté","indépendance",
+       "souveraineté","domination","hiérarchie","protocole","étiquette","courtoisie","politesse","grossièreté","vulgarité","décence",
+       "frontière","citoyenneté","utopie","tentation","séduction","charme","fascination","emprise","influence","persuasion",
+       "manipulation","chantage","intimidation","menace","contrainte","obligation","responsabilité","engagement","promesse","parole",
+       "mensonge","vérité","sincérité","franchise","naïveté","innocence","malice","ruse","astuce","stratagème",
+       "imposture","supercherie","canular","dérision","ironie","sarcasme","moquerie","satire","caricature","plagiat",
+       "contrefaçon","réconciliation","rupture","adieu","retrouvailles","malentendu","quiproquo","aveuglement","lucidité","scrupule",
+       "jeunesse","vieillesse","enfance","maturité","déclin","renaissance","métamorphose","transition","attente","urgence",
+       "postérité","souvenir","oubli","mémoire","amnésie","habitude","rituel","tradition","coutume","folklore",
+       "légende","mythe","prophétie","oracle","augure","fatalité","providence","miracle","vestige","relique"
+  ]
 };
 
 const EQUIPES = {
@@ -48,7 +149,8 @@ const EQUIPES = {
 /* Composition de la main de 5 mots proposee au donneur : les paliers sont melanges. */
 const TIRAGE = { 10: 2, 20: 2, 30: 1 };
 
-/* Objectif de points. Le franchir n'arrete pas la partie : il declenche un dernier tour. */
+/* Objectif de points. Le franchir n'arrete pas la partie : on regarde d'abord
+   ce que l'equipe menee peut encore faire avec le mot le plus cher. */
 const CIBLE = 100;
 
 /* Le vol : l'equipe adverse peut rafler le mot en annoncant strictement moins de coups.
@@ -370,8 +472,11 @@ button{font-family:var(--font)}
    prend sa place ; des qu'on relache, il se referme.
    Apres un vol, le coequipier du voleur n'a jamais vu le mot et doit
    pourtant arbitrer - ce bouton n'est pas un confort, c'est la regle. */
+/* touch-action:none — sans quoi un doigt qui glisse devient un defilement,
+   le navigateur annule le pointeur et le mot disparait tout seul. */
 #b-oeil{flex:1;min-height:110px;border-radius:22px;font-size:56px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
+  touch-action:none;-webkit-user-select:none;user-select:none;
   --face:transparent;--label:var(--sombre);--trait:rgba(61,43,22,.32)}
 #b-oeil.montre{--face:#fff;--trait:var(--or);border-width:5px;font-weight:800;font-size:46px}
 /* Tant que l'oeil est ferme, le glyphe doit etre rendu en emoji couleur et
@@ -1211,21 +1316,31 @@ tap("b-laisser",      () => trancheLeContre(false, 0));
   if (VOL_AUTORISE && n < E.t.pariOuv) trancheLeContre(true, n);
 }));
 tap("b-nous-arbitrons", confirmeTampon);
-/* L'oeil s'ouvre a l'appui et se referme des qu'on relache : le mot ne
-   peut jamais rester affiche sur l'appareil. */
+/* L'oeil s'ouvre a l'appui et se referme au relachement, et a rien d'autre.
+   Surtout pas a `pointerleave` : le doigt qui glisse de quelques pixels
+   sort de la touche et refermait le mot en pleine lecture. On ecoute donc
+   le relachement sur la FENETRE, pas sur le bouton - ou qu'il tombe, il
+   referme. Le mot ne peut ainsi jamais rester affiche sur un appareil
+   pose, sans pour autant clignoter des qu'on bouge. */
 (function boutonOeil(){
   const b = el("b-oeil");
   const montre = (v) => {
-    if (!E.t || !E.t.mot) return;
+    if (v && (!E.t || !E.t.mot)) return;
+    if (E.motVisible === v) return;
     E.motVisible = v;
     majOeil();
   };
+  const ferme = () => montre(false);
   b.addEventListener("pointerdown", (e) => {
     if (bloque()) return;
-    b.setPointerCapture && b.setPointerCapture(e.pointerId);
+    e.preventDefault();                   // pas de selection, pas de loupe
     montre(true);
   });
-  ["pointerup","pointerleave","pointercancel"].forEach((ev) => b.addEventListener(ev, () => montre(false)));
+  /* Le relachement peut arriver n'importe ou : hors du bouton, hors de la
+     page, ou jamais (onglet masque, appel entrant). Tous referment. */
+  ["pointerup","pointercancel"].forEach((ev) => window.addEventListener(ev, ferme));
+  window.addEventListener("blur", ferme);
+  document.addEventListener("visibilitychange", () => { if (document.hidden) ferme(); });
   b.addEventListener("contextmenu", (e) => e.preventDefault());
 })();
 tap("b-trouve",       () => conclut("trouvé", E.t.preneur));

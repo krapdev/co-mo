@@ -92,9 +92,11 @@ ne peut pas entrer.
   proposition de vol alterne dans l'équipe qui la reçoit. Sur quatre tours,
   chacun ouvre une fois et se voit proposer un vol une fois. Seule entorse
   assumée : le dernier tour, donné à l'équipe menée.
-- **Le catalogue est mélangé une fois au début de la partie**, puis consommé
-  dans l'ordre, et **jamais recyclé** : un mot n'est proposé qu'une seule fois
-  par partie, joué ou non.
+- **Le catalogue fait 1000 mots** (400 / 350 / 250 par palier). Il est mélangé
+  une fois au début de la partie, puis consommé dans l'ordre, et **jamais
+  recyclé** : un mot n'est proposé qu'une seule fois par partie, joué ou non.
+  `regles.mjs` relit le corpus au démarrage (mot simple, minuscules, pas de
+  doublon, pas de racine d'avatar ou d'équipe, pas de vocabulaire du jeu).
 - **Une seule validation par manche**, à la fin — plus de verdict indice par
   indice, plus de braises à décompter, plus d'`Annuler`. L'écran d'arbitrage
   rappelle le contrat du tour et affiche le nombre d'indices en très gros.
@@ -103,6 +105,11 @@ ne peut pas entrer.
   affiché sur un appareil posé. Le geste n'ayant pas d'affordance, l'écran
   l'énonce (`maintiens pour voir le mot`). Il faut le rendu emoji couleur
   (`--emoji`) tant que l'œil est fermé, sinon le glyphe sort en caractère texte.
+- **L'œil ne se referme qu'au relâchement.** Écouter `pointerleave` sur le
+  bouton — même avec `setPointerCapture` — referme le mot dès que le doigt
+  dérive hors de la touche. Le relâchement s'écoute donc sur `window`
+  (`pointerup`, `pointercancel`, `blur`, `visibilitychange`), et le bouton porte
+  `touch-action:none` pour qu'un glissement ne devienne pas un défilement.
 - **L'écran d'arbitrage porte la valeur du mot** sous le nombre d'indices : les
   arbitres doivent savoir ce qui est en jeu, et le devineur ne tient jamais
   l'appareil pendant la manche.
