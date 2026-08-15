@@ -92,11 +92,15 @@ ne peut pas entrer.
   proposition de vol alterne dans l'équipe qui la reçoit. Sur quatre tours,
   chacun ouvre une fois et se voit proposer un vol une fois. Seule entorse
   assumée : le dernier tour, donné à l'équipe menée.
-- **Le catalogue fait 1000 mots** (400 / 350 / 250 par palier). Il est mélangé
-  une fois au début de la partie, puis consommé dans l'ordre, et **jamais
-  recyclé** : un mot n'est proposé qu'une seule fois par partie, joué ou non.
-  `regles.mjs` relit le corpus au démarrage (mot simple, minuscules, pas de
-  doublon, pas de racine d'avatar ou d'équipe, pas de vocabulaire du jeu).
+- **Le catalogue fait 1000 mots** (400 / 350 / 250 par palier). `regles.mjs`
+  relit le corpus au démarrage (mot simple, minuscules, pas de doublon, pas de
+  racine d'avatar ou d'équipe, pas de vocabulaire du jeu).
+- **Un mot proposé part en quarantaine pour 500 tirages** (`QUARANTAINE`), soit
+  une dizaine de parties. La file **traverse les parties et les rechargements**
+  (`kowo.pioche.v1`) : c'est le point, et `commence()` ne doit jamais la remettre
+  à zéro. Le tirage aléatoire par partie était le vrai défaut — chaque partie
+  était irréprochable prise seule, et un mot pouvait revenir 8 tirages plus tard
+  dans la suivante. Ne pas revenir à une pioche mélangée par partie.
 - **Une seule validation par manche**, à la fin — plus de verdict indice par
   indice, plus de braises à décompter, plus d'`Annuler`. L'écran d'arbitrage
   rappelle le contrat du tour et affiche le nombre d'indices en très gros.
@@ -124,9 +128,10 @@ ne peut pas entrer.
 - **Le bandeau de score est visible partout dès que la partie tourne**, tampons
   compris. Le monochrome du tampon reste le signal « ne regarde pas », mais le
   score prime — demandé explicitement.
-- **Clé de stockage `kowo.equipes.v2`.** Toutes les branches sont servies depuis
-  la même origine et partagent donc le `localStorage` : ne pas réutiliser `v1`,
-  qui appartient à l'ancien prototype.
+- **Clés de stockage `kowo.equipes.v2` (les quatre avatars) et `kowo.pioche.v1`
+  (la quarantaine).** Toutes les branches sont servies depuis la même origine et
+  partagent donc le `localStorage` : ne pas réutiliser `kowo.equipes.v1`, qui
+  appartient à l'ancien prototype.
 
 ## Passages de téléphone par tour
 

@@ -199,19 +199,36 @@ c'est la seule façon d'obtenir le même air à 25px et à 132px.
 Descendre l'interligne sous 1 ne resserre rien de plus — le dessin déborde sa
 ligne et vient recouvrir le libellé.
 
-## Le catalogue — 1000 mots
+## Le catalogue — 1000 mots, et une quarantaine
 
-**400 faciles (10 points), 350 moyens (20), 250 difficiles (30).** Le catalogue
-est **mélangé une fois au début de chaque partie**, puis consommé dans l'ordre :
-cinq mots par tour, deux à 10 points, deux à 20, un à 30.
+**400 faciles (10 points), 350 moyens (20), 250 difficiles (30).** Cinq mots par
+tour : deux à 10, deux à 20, un à 30.
 
-Une partie n'en consomme qu'une centaine au plus : à mille mots, **deux parties
-ne se ressemblent pas**, et un mot déjà vu ne revient pas d'une soirée à
-l'autre. C'est ce que les 100 mots d'origine ne tenaient pas.
+### La quarantaine
 
-**Un mot n'est jamais proposé deux fois dans une même partie**, joué ou non — les
-quatre mots écartés ne retournent pas dans la pioche. Si un palier s'épuise, il
-n'est pas recyclé : la main se complète depuis les autres paliers.
+**Un mot proposé ne peut pas revenir avant que 500 autres aient été tirés** —
+une partie en consomme une quarantaine, donc *une dizaine de parties*. Ce n'est
+pas une probabilité, c'est une garantie : le mot est tenu à l'écart du tirage
+jusqu'à ce que la file de 500 l'ait poussé dehors.
+
+Elle **traverse les parties et les rechargements** (`localStorage`, clé
+`kowo.pioche.v1`). C'est tout l'intérêt : le défaut n'était pas la taille du
+catalogue mais l'absence de mémoire. Chaque partie remélangeait le catalogue et
+repartait du haut, si bien qu'un mot vu dix minutes plus tôt pouvait tomber dès
+le premier tour de la partie suivante. Mesuré sur 40 parties, l'écart le plus
+court entre deux apparitions d'un même mot était de **8 mots** ; il est
+aujourd'hui de 500, par construction.
+
+La quarantaine retient la moitié du catalogue : il reste en permanence 500 mots
+éligibles, dont ~150 dans le palier le plus étroit. Aucune perte de variété
+sensible. Si le corpus descendait sous ~505 mots elle serait levée à chaque
+tirage — `regles.mjs` refuse ce cas.
+
+**Un mot n'est jamais proposé deux fois dans une même partie**, joué ou non : les
+quatre mots écartés partent en quarantaine comme celui qui a été joué.
+
+Le compteur est lisible depuis le téléphone, en tête de l'écran `log` :
+`quarantaine 500/1000`.
 
 `regles.mjs` relit le corpus avant de jouer : un seul mot, minuscules, aucun
 doublon, aucune racine partagée avec un avatar ou une équipe, aucun mot du
@@ -222,6 +239,7 @@ vocabulaire du jeu (`indice`, `pari`, `coup`…) qui prêterait à confusion.
 Tout est en haut de `index.html`, dans un bloc `<script>` isolé :
 
 - `CORPUS` — les 1000 mots par palier de points (`10`, `20`, `30`).
+- `QUARANTAINE` — combien de mots doivent passer avant qu'un mot puisse revenir (500).
 - `EQUIPES` — les deux noms d'équipe, forme longue et forme courte.
 - `TIRAGE` — la composition de la main de 5 mots (par défaut 2 faciles, 2 moyens, 1 dur).
 - `CIBLE` — le score qui déclenche le dernier tour (100).
@@ -266,6 +284,16 @@ téléphone, la traçabilité des bannissements, et qu'aucun mot ne traîne dans
 DOM pendant un tampon. Il rejoue en plus quatre fins explicites — écart
 insurmontable, dernière chance, égalité relancée — parce qu'elles sont trop rares
 pour tomber d'elles-mêmes dans le tirage.
+
+Deux mesures y sont faites plutôt que raisonnées, parce qu'elles portent sur des
+comportements qui ne se lisent pas dans le code :
+
+- **La quarantaine** — l'écart réel entre deux apparitions d'un même mot, mesuré
+  sur la suite complète des tirages, *parties confondues*. C'est là que le défaut
+  se cachait : chaque partie prise isolément était irréprochable. Le script
+  vérifie aussi que la quarantaine est bien retrouvée après un rechargement.
+- **L'œil** — le geste est rejoué avec un vrai pointeur : appui, dérive, sortie
+  du bouton, relâchement.
 
 ## Publier
 

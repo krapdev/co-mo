@@ -39,14 +39,21 @@ const corpus = await page.evaluate(() => {
       if (VOCABULAIRE.includes(m))           soucis.push(`${v} · vocabulaire du jeu : ${m}`);
     }
   }
-  return { soucis, compte, total: vus.size };
+  if (vus.size <= QUARANTAINE + 5)
+    soucis.push(`corpus trop court (${vus.size}) pour une quarantaine de ${QUARANTAINE} : elle serait levee a chaque tirage`);
+  return { soucis, compte, total: vus.size, quarantaine: QUARANTAINE };
 });
-console.log(`corpus ${corpus.total} mots · ` + Object.entries(corpus.compte).map(([v, n]) => `${v} pts : ${n}`).join(' · '));
+console.log(`corpus ${corpus.total} mots · ` + Object.entries(corpus.compte).map(([v, n]) => `${v} pts : ${n}`).join(' · ')
+            + ` · quarantaine ${corpus.quarantaine}`);
 if (corpus.soucis.length) console.log(' - ' + corpus.soucis.join('\n - '));
 
 const r = await page.evaluate((PARTIES) => {
   const echecs = [];
   let tours = 0, vols = 0, involables = 0, bans = 0, passagesVol = 0, passagesSansVol = 0;
+  /* Tous les mots tires, dans l'ordre, PARTIES COMPRISES : c'est entre les
+     parties que les repetitions se voyaient. On y mesurera l'ecart reel
+     entre deux apparitions d'un meme mot. */
+  const tirages = [];
 
   const verifie = () => {
     /* Conservation : chaque tour attribue exactement sa valeur, a une equipe. */
@@ -122,10 +129,12 @@ const r = await page.evaluate((PARTIES) => {
       passages++; confirmeTampon();
       if (ecranCourant !== 's-choix') echecs.push("le serment d'ouverture ne mene pas au choix");
 
-      /* Catalogue melange au depart : les 5 mots du tour sont distincts, et
-         aucun mot n'est propose deux fois de toute la partie. */
+      /* Les 5 mots du tour sont distincts, complets, et aucun n'est propose
+         deux fois dans la partie. */
       const cinq = E.propositions.map((w) => w.m);
+      if (cinq.length !== 5) echecs.push(`main incomplete : ${cinq.length} mots`);
       if (new Set(cinq).size !== 5) echecs.push('doublon dans les 5 mots proposes');
+      cinq.forEach((m) => tirages.push(m));
       const revus = cinq.filter((m) => vus.has(m));
       if (revus.length) echecs.push('mot deja propose cette partie : ' + revus[0]);
       cinq.forEach((m) => vus.add(m));
@@ -178,11 +187,29 @@ const r = await page.evaluate((PARTIES) => {
     }
     if (garde >= 400) echecs.push('partie sans fin');
   }
-  return { tours, vols, involables, bans, passagesVol, passagesSansVol, echecs };
+
+  /* LA QUARANTAINE — l'ecart reel entre deux apparitions d'un meme mot, sur
+     toute la suite des parties. C'est la mesure qui compte : elle traverse
+     les parties, la ou l'ancienne pioche remise a zero les separait. */
+  const derniere = new Map();
+  let ecartMin = Infinity, motMin = null;
+  tirages.forEach((m, i) => {
+    if (derniere.has(m)) {
+      const entre = i - derniere.get(m) - 1;   // mots tires entre les deux
+      if (entre < ecartMin) { ecartMin = entre; motMin = m; }
+    }
+    derniere.set(m, i);
+  });
+  if (ecartMin < QUARANTAINE) echecs.push(`« ${motMin} » revenu apres ${ecartMin} mots, quarantaine ${QUARANTAINE}`);
+
+  return { tours, vols, involables, bans, passagesVol, passagesSansVol, echecs,
+           tirages: tirages.length, distincts: derniere.size,
+           ecartMin: ecartMin === Infinity ? null : ecartMin };
 }, PARTIES);
 
 console.log(`tours ${r.tours} · vols ${r.vols} · paris involables ${r.involables} · bannissements ${r.bans}`);
 console.log(`passages — avec vol ${r.passagesVol} (attendu ${r.vols * 3}) · sans vol ${r.passagesSansVol} (attendu ${(r.tours - r.vols) * 2})`);
+console.log(`mots tires ${r.tirages} · distincts ${r.distincts} · plus petit ecart entre deux apparitions ${r.ecartMin}`);
 
 /* LA FIN — trois cas de figure, joues explicitement. */
 const fin = await page.evaluate(() => {
@@ -258,7 +285,16 @@ jalon('le glyphe revient', (await lu()).texte === '👁️');
 for (const j of oeil) console.log(`  oeil · ${j.nom.padEnd(28)} ${j.ok ? 'ok' : 'ECHEC'}`);
 const oeilKo = oeil.filter((j) => !j.ok).length;
 
-const ko = r.echecs.length || finKo || oeilKo || corpus.soucis.length || plantages.length;
+/* LA QUARANTAINE SURVIT AU RECHARGEMENT — sinon elle ne sert a rien : on
+   enchaine les parties en relancant l'application, pas dans le meme onglet. */
+const avant = await page.evaluate(() => ({ n: E.recents.length, fin: E.recents.slice(-5).join('|') }));
+await page.reload();
+await page.waitForTimeout(250);
+const apres = await page.evaluate(() => ({ n: E.recents.length, fin: E.recents.slice(-5).join('|') }));
+const survit = avant.n > 0 && apres.n === avant.n && apres.fin === avant.fin;
+console.log(`  quarantaine · ${avant.n} mots retenus · ${survit ? 'retrouves apres rechargement' : `PERDUS (${apres.n} au retour)`}`);
+
+const ko = r.echecs.length || finKo || oeilKo || corpus.soucis.length || !survit || plantages.length;
 console.log(r.echecs.length ? `ECHECS :\n - ${r.echecs.join('\n - ')}` : 'toutes les invariantes tiennent');
 if (plantages.length) console.log('erreurs page :', plantages.join('\n'));
 await navigateur.close();

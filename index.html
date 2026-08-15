@@ -19,9 +19,9 @@
    CORPUS - 1000 mots (400 faciles, 350 moyens, 250 difficiles).
    Les cles sont les valeurs en points.
 
-   Il est melange une fois au debut de chaque partie, puis consomme dans
-   l'ordre : un mot n'est donc jamais propose deux fois dans la meme
-   partie, et deux parties ne se ressemblent pas.
+   Un mot propose part en quarantaine : il ne revient pas avant que 500
+   autres mots aient ete tires - une dizaine de parties. La quarantaine
+   traverse les parties et les rechargements (voir QUARANTAINE).
 
    Regles si tu elargis :
    - un seul mot, au singulier, sans article ;
@@ -713,8 +713,10 @@ const el = (id) => document.getElementById(id);
 /* Le mot le plus cher du corpus : sert a savoir si l'equipe menee peut
    encore atteindre la cible en un seul tour. */
 const PLUS_CHER = Math.max.apply(null, Object.keys(CORPUS).map(Number));
+const TAILLE_CORPUS = CORPUS[10].length + CORPUS[20].length + CORPUS[30].length;
 const melange = (a) => { a = a.slice(); for (let i=a.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; const t=a[i]; a[i]=a[j]; a[j]=t; } return a; };
 const CLE_LS = "kowo.equipes.v2";
+const CLE_PIOCHE = "kowo.pioche.v1";
 
 /* Verrou anti double-tap : tout changement d'ecran gele les taps 400 ms.
    Sans lui, un doigt presse enchaine deux ecrans et brule un secret. */
@@ -794,7 +796,8 @@ const E = {
   rot: { lichen:0, braise:0 },     // qui ouvre et donne, par equipe
   rotVol: { lichen:0, braise:0 },  // a qui l'on propose de voler, par equipe
   score: { lichen:0, braise:0 },
-  catalogue: null,                 // mots melanges au debut, consommes dans l'ordre
+  recents: [],                     // les QUARANTAINE derniers mots tires, du plus ancien au plus recent
+  quarantaine: new Set(),          // les memes, pour la recherche
   ouvreur: null,
   t: null,                         // tour en cours
   log: [],
@@ -924,11 +927,9 @@ function commence(){
   E.rot    = { lichen:0, braise:0 };
   E.rotVol = { lichen:0, braise:0 };
   E.score = { lichen:0, braise:0 };
-  /* Le catalogue est melange UNE FOIS au debut de la partie, puis consomme
-     dans l'ordre. Auparavant chaque tour retirait 5 mots au hasard et n'en
-     consommait qu'un : les quatre ecartes revenaient dans la pioche et
-     pouvaient se representer au tour suivant. */
-  E.catalogue = { 10: melange(CORPUS[10]), 20: melange(CORPUS[20]), 30: melange(CORPUS[30]) };
+  /* La quarantaine n'est PAS remise a zero : c'est tout son interet. Elle
+     traverse les parties, sinon chaque nouvelle partie repartirait d'un
+     catalogue neuf et reproposerait aussitot les mots de la precedente. */
   E.log = [];
   E.dernierTour = false;
   E.finie = false;
@@ -940,32 +941,73 @@ function commence(){
 }
 
 /* ============================================================
-   TIRAGE DES 5 MOTS
-   Le catalogue est melange au debut de la partie et consomme dans l'ordre :
-   aucun mot ne peut se representer d'un tour a l'autre.
+   TIRAGE DES 5 MOTS - la quarantaine
+
+   Un mot propose part en quarantaine : il ne peut pas revenir avant que
+   QUARANTAINE autres mots aient ete tires, soit une dizaine de parties.
+
+   C'etait le vrai defaut de la version precedente : le catalogue etait
+   melange au debut de CHAQUE partie et consomme depuis le haut. Rien ne
+   survivait d'une partie a l'autre, et les mots de la partie d'avant
+   pouvaient tomber des le premier tour de la suivante. La memoire doit
+   donc survivre a la partie ET au rechargement.
    ============================================================ */
+const QUARANTAINE = 500;
+
+function chargeQuarantaine(){
+  let l = [];
+  try { l = JSON.parse(localStorage.getItem(CLE_PIOCHE)); } catch(e){}
+  if (!Array.isArray(l)) l = [];
+  /* On ne garde que des mots du corpus courant : editer le corpus ne doit
+     pas laisser trainer des fantomes dans la quarantaine. */
+  const connus = new Set([].concat(CORPUS[10], CORPUS[20], CORPUS[30]));
+  poseQuarantaine(l.filter((m) => connus.has(m)).slice(-QUARANTAINE));
+}
+
+function poseQuarantaine(l){
+  E.recents = l;
+  E.quarantaine = new Set(l);
+}
+
+function memorise(mots){
+  const l = E.recents.concat(mots);
+  poseQuarantaine(l.slice(Math.max(0, l.length - QUARANTAINE)));
+  try { localStorage.setItem(CLE_PIOCHE, JSON.stringify(E.recents)); } catch(e){}
+}
+
 function tireLaMain(){
-  const out = [];
+  const out = [], pris = new Set();
   [10, 20, 30].forEach((v) => {
     for (let i = 0; i < TIRAGE[v]; i++){
-      const w = prendMot(v);
-      if (w) out.push(w);
+      const w = prendMot(v, pris);
+      if (w){ out.push(w); pris.add(w.m); }
     }
   });
-  /* Un palier epuise n'est jamais recycle : on complete depuis les autres.
-     Un mot n'est donc propose qu'une seule fois par partie, joue ou non. */
   while (out.length < 5){
-    const w = prendMot(null);
+    const w = prendMot(null, pris);
     if (!w) break;
-    out.push(w);
+    out.push(w); pris.add(w.m);
   }
+  memorise(out.map((w) => w.m));
   return melange(out);
 }
 
-function prendMot(v){
-  if (v && E.catalogue[v].length) return { m: E.catalogue[v].shift(), v: v };
-  for (const p of [10, 20, 30]) if (E.catalogue[p].length) return { m: E.catalogue[p].shift(), v: p };
-  return null;
+/* Eligibles : le palier voulu, moins la quarantaine, moins ce que la main
+   contient deja. Un palier epuise se complete depuis les autres. */
+function prendMot(v, pris){
+  const paliers = v ? [v, 10, 20, 30] : [10, 20, 30];
+  const cherche = (filtre) => {
+    for (const p of paliers){
+      const libres = CORPUS[p].filter(filtre);
+      if (libres.length) return { m: libres[(Math.random() * libres.length) | 0], v: p };
+    }
+    return null;
+  };
+  const w = cherche((m) => !E.quarantaine.has(m) && !pris.has(m));
+  if (w) return w;
+  /* Corpus trop court pour la quarantaine : on la leve pour ce tirage
+     plutot que de servir une main incomplete. `regles.mjs` le signale. */
+  return cherche((m) => !pris.has(m));
 }
 
 /* ============================================================
@@ -1269,7 +1311,10 @@ const ligneLog = (l) => [l.n, l.ouvre, l.donneurOuv, l.mot, l.val, "pari " + l.p
   l.derniere === "o" ? "dernière chance" : "—"].join(" | ");
 
 function dessineLog(){
-  el("lg-titre").textContent = "Log · " + E.log.length + " tours";
+  /* L'etat de la quarantaine se lit ici : c'est la seule facon de la voir
+     depuis un telephone, sans console. */
+  el("lg-titre").textContent = "Log · " + E.log.length + " tours · quarantaine "
+    + E.recents.length + "/" + TAILLE_CORPUS;
   const box = el("lg-liste");
   box.innerHTML = "";
   if (!E.log.length){
@@ -1381,6 +1426,7 @@ function redessineCourant(){
    DEMARRAGE
    ============================================================ */
 (function demarre(){
+  chargeQuarantaine();
   try {
     const brut = localStorage.getItem(CLE_LS);
     if (brut){
