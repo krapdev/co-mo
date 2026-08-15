@@ -25,7 +25,9 @@ const ECRANS = {
   tamponVol: EQUIPE + "commence();ouvreLeTour();confirmeTampon();E.motChoisi=0;annoncePari(3);confirmeTampon();trancheLeContre(true,1);",
   arbitreVol:EQUIPE + "commence();ouvreLeTour();confirmeTampon();E.motChoisi=0;annoncePari(3);confirmeTampon();trancheLeContre(true,1);confirmeTampon();",
   arbitre:   EQUIPE + "commence();ouvreLeTour();confirmeTampon();E.motChoisi=0;annoncePari(3);confirmeTampon();trancheLeContre(false,0);dessineArbitrage();",
-  banni:     EQUIPE + "commence();ouvreLeTour();confirmeTampon();E.motChoisi=0;annoncePari(3);confirmeTampon();trancheLeContre(false,0);dessineBanni();",
+  /* L'oeil maintenu : le mot prend la place du glyphe et l'aide disparait. */
+  arbitreMot:EQUIPE + "commence();ouvreLeTour();confirmeTampon();E.motChoisi=0;annoncePari(3);confirmeTampon();trancheLeContre(false,0);dessineArbitrage();E.motVisible=true;majOeil();",
+  banni:     EQUIPE +"commence();ouvreLeTour();confirmeTampon();E.motChoisi=0;annoncePari(3);confirmeTampon();trancheLeContre(false,0);dessineBanni();",
   resultat:  EQUIPE + "commence();ouvreLeTour();confirmeTampon();E.motChoisi=0;annoncePari(3);confirmeTampon();trancheLeContre(false,0);conclut('trouvé',E.t.preneur);",
   fin:       EQUIPE + "commence();E.score.lichen=100;E.score.braise=70;dessineFin();",
 };

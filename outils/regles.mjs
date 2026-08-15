@@ -39,11 +39,20 @@ const r = await page.evaluate((PARTIES) => {
       if (E.rot[k] !== ouvertures % 2) echecs.push(`rotation ${k} : ${E.rot[k]}, attendu ${ouvertures % 2}`);
     }
     /* L'ouverture alterne strictement, vol ou pas. Seule exception assumee :
-       le dernier tour, volontairement donne a l'equipe menee - on l'exclut
-       donc de la comparaison. */
-    const jusqua = E.finie ? E.log.length - 1 : E.log.length;
-    for (let i = 1; i < jusqua; i++) {
-      if (E.log[i].ouvre === E.log[i - 1].ouvre) echecs.push('deux ouvertures de suite pour la meme equipe');
+       la derniere chance, volontairement donnee a l'equipe menee - le log la
+       marque, ce qui distingue l'entorse voulue d'un bogue d'alternance. */
+    for (let i = 1; i < E.log.length; i++) {
+      if (E.log[i].ouvre === E.log[i - 1].ouvre && E.log[i].derniere !== 'o')
+        echecs.push('deux ouvertures de suite pour la meme equipe');
+    }
+    /* Et reciproquement : une derniere chance n'est accordee qu'a l'equipe menee. */
+    for (let i = 1; i < E.log.length; i++) {
+      if (E.log[i].derniere !== 'o') continue;
+      const avant = E.log.slice(0, i);
+      const pts = { lichen: 0, braise: 0 };
+      avant.forEach((l) => { pts[l.points === EQUIPES.lichen.court ? 'lichen' : 'braise'] += l.val; });
+      const menee = pts.lichen < pts.braise ? 'lichen' : 'braise';
+      if (E.log[i].ouvre !== EQUIPES[menee].court) echecs.push('derniere chance donnee a l\'equipe en tete');
     }
     /* Chaque joueur ouvre a son tour dans son equipe. */
     for (const k of ['lichen', 'braise']) {
@@ -59,6 +68,13 @@ const r = await page.evaluate((PARTIES) => {
     if (d.issue !== 'trouvé' && d.preneur === d.points) echecs.push(`${d.issue} credite au preneur`);
     if (d.issue === 'indice refusé' && d.bans !== 1) echecs.push('bannissement non trace');
     if (d.issue !== 'indice refusé' && d.bans !== 0) echecs.push('bannissement fantome');
+
+    /* LA FIN — une partie ne se termine jamais sur une egalite, ni avant
+       que quelqu'un ait atteint la cible. */
+    if (E.finie) {
+      if (E.score.lichen === E.score.braise) echecs.push('partie terminee sur une egalite');
+      if (Math.max(E.score.lichen, E.score.braise) < CIBLE) echecs.push('partie terminee sans atteindre la cible');
+    }
   };
 
   for (let g = 0; g < PARTIES && echecs.length < 6; g++) {
@@ -144,41 +160,53 @@ const r = await page.evaluate((PARTIES) => {
 console.log(`tours ${r.tours} · vols ${r.vols} · paris involables ${r.involables} · bannissements ${r.bans}`);
 console.log(`passages — avec vol ${r.passagesVol} (attendu ${r.vols * 3}) · sans vol ${r.passagesSansVol} (attendu ${(r.tours - r.vols) * 2})`);
 
-/* La fin de partie : franchir la cible declenche UN dernier tour, ouvert
-   par l'equipe menee. */
+/* LA FIN — trois cas de figure, joues explicitement. */
 const fin = await page.evaluate(() => {
   const out = [];
-  for (let g = 0; g < 200; g++) {
+  const prepare = (l, b) => {
     E.choix = ['mousserot','brumaille','tibiane','grognemousse']; E.reprise = false; commence();
-    let arme = null, apres = 0, ouvreurDernier = null, garde = 0;
-    while (!E.finie && garde++ < 400) {
-      ouvreLeTour(); confirmeTampon();
-      E.motChoisi = (Math.random() * E.propositions.length) | 0;
-      const p = 1 + ((Math.random() * 3) | 0);
-      annoncePari(p);
-      if (p === 1) confirmeTampon();
-      else {
-        confirmeTampon();
-        const vole = VOL_AUTORISE && Math.random() < .4;
-        if (vole) { trancheLeContre(true, 1 + ((Math.random() * (p - 1)) | 0)); confirmeTampon(); }
-        else trancheLeContre(false, 0);
-      }
-      if (arme !== null) { apres++; if (ouvreurDernier === null) ouvreurDernier = E.t.ouvreur; }
-      const d = Math.random();
-      if (d < .12) { E.t.bans++; conclut('indice refusé', E.t.arbitre); }
-      else if (d < .56) conclut('trouvé', E.t.preneur);
-      else conclut('quota épuisé', autre(E.t.preneur));
-      if (arme === null && E.finProgrammee) arme = E.finProgrammee;
-    }
-    out.push({ ok: E.finie && apres === 1 && ouvreurDernier === autre(arme) });
-  }
-  return out.filter((o) => !o.ok).length;
-});
-console.log(fin === 0
-  ? 'dernier tour : toujours exactement 1, ouvert par l\'equipe menee'
-  : `ECHEC : ${fin} parties avec un dernier tour incorrect`);
+    E.score.lichen = l; E.score.braise = b; E.dernierTour = false; E.ouvreur = 'lichen';
+  };
+  const unTour = (gagnant, valeur) => {
+    ouvreLeTour(); confirmeTampon();
+    E.motChoisi = E.propositions.findIndex((w) => w.v === valeur);
+    if (E.motChoisi < 0) { out.push({ cas: 'valeur absente de la main', ok: false, score: [valeur, 0] }); E.motChoisi = 0; }
+    annoncePari(2); confirmeTampon(); trancheLeContre(false, 0);
+    if (gagnant === E.t.preneur) conclut('trouvé', E.t.preneur);
+    else conclut('quota épuisé', autre(E.t.preneur));
+  };
 
-const ko = r.echecs.length || fin || plantages.length;
+  /* 1. Le suiveur ne peut plus atteindre la cible : la partie s'arrete net. */
+  prepare(90, 40);
+  unTour('lichen', 10);                       // lichen passe a 100, braise reste a 40
+  out.push({ cas: 'suiveur hors course', ok: E.finie === true, score: [E.score.lichen, E.score.braise] });
+
+  /* 2. Le suiveur peut encore atteindre la cible ET passer devant : dernier tour. */
+  prepare(90, 80);
+  unTour('lichen', 10);                       // lichen 100, braise 80 -> 80+30 = 110 > 100
+  const armee = !E.finie && E.dernierTour && E.ouvreur === 'braise';
+  unTour('braise', 10);                       // braise joue sa derniere chance
+  out.push({ cas: 'derniere chance', ok: armee && E.finie === true, score: [E.score.lichen, E.score.braise] });
+
+  /* 3. Le suiveur atteindrait la cible, mais sans passer devant : inutile. */
+  prepare(120, 100);
+  unTour('lichen', 20);                       // lichen 140, braise 100 -> 100+30 = 130 < 140
+  out.push({ cas: 'ecart insurmontable', ok: E.finie === true, score: [E.score.lichen, E.score.braise] });
+
+  /* 4. Egalite au-dessus de la cible : on relance jusqu'a se departager. */
+  prepare(100, 90);
+  unTour('braise', 10);                       // 100 / 100 : egalite
+  const relance = !E.finie && E.score.lichen === E.score.braise;
+  let g = 0;
+  while (!E.finie && g++ < 8) unTour('braise', 20);
+  out.push({ cas: 'egalite relancee', ok: relance && E.finie === true && E.score.braise > E.score.lichen,
+             score: [E.score.lichen, E.score.braise] });
+  return out;
+});
+for (const c of fin) console.log(`  ${c.cas.padEnd(20)} ${c.ok ? 'ok' : 'ECHEC'}  score ${c.score.join(' / ')}`);
+const finKo = fin.filter((c) => !c.ok).length;
+
+const ko = r.echecs.length || finKo || plantages.length;
 console.log(r.echecs.length ? `ECHECS :\n - ${r.echecs.join('\n - ')}` : 'toutes les invariantes tiennent');
 if (plantages.length) console.log('erreurs page :', plantages.join('\n'));
 await navigateur.close();

@@ -345,6 +345,9 @@ button{font-family:var(--font)}
 .ar-quota{flex:none;text-align:center;margin-top:2px}
 .ar-nb{font-weight:800;font-size:104px;line-height:.9}
 .ar-nb-lib{font-weight:700;font-size:15px;letter-spacing:.18em;text-transform:uppercase;opacity:.7}
+/* Les arbitres doivent savoir ce qui est en jeu pour trancher. Le devineur
+   ne tient jamais l'appareil pendant la manche : la valeur ne fuite pas. */
+.ar-valeur{font-weight:800;font-size:19px;margin-top:6px;opacity:.9}
 .mini-btn{min-height:44px;padding-inline:14px;border-radius:14px;border-width:2px;
   font-weight:700;font-size:15px;--face:transparent;--label:var(--sombre);--trait:rgba(61,43,22,.32)}
 .mini-btn:disabled{opacity:.28}
@@ -354,22 +357,30 @@ button{font-family:var(--font)}
 .rappel{
   flex:none;border:2px dashed rgba(61,43,22,.4);border-radius:16px;
   background:rgba(255,250,235,.55);color:var(--sombre);
-  font-family:var(--font);font-weight:700;font-size:14px;line-height:1.3;
-  padding:10px 12px;text-align:left;cursor:pointer;min-height:44px;
+  font-family:var(--font);text-align:left;cursor:pointer;min-height:44px;
+  padding:9px 13px;display:flex;flex-direction:column;gap:1px;
 }
+.rappel-titre{font-weight:800;font-size:14px;letter-spacing:.06em;text-transform:uppercase}
+/* Une liste, pas une phrase : on la lit d'un coup d'oeil quand on hesite. */
+.rappel-item{font-weight:700;font-size:14px;line-height:1.35;padding-left:12px;position:relative}
+.rappel-item::before{content:"·";position:absolute;left:2px;font-weight:800}
 .rappel:active{filter:brightness(.95)}
 
-/* L'oeil occupe le milieu de l'ecran : au tap il cede la place au mot.
+/* L'oeil occupe le milieu de l'ecran : tant qu'on le maintient, le mot
+   prend sa place ; des qu'on relache, il se referme.
    Apres un vol, le coequipier du voleur n'a jamais vu le mot et doit
    pourtant arbitrer - ce bouton n'est pas un confort, c'est la regle. */
 #b-oeil{flex:1;min-height:110px;border-radius:22px;font-size:56px;
-  display:flex;align-items:center;justify-content:center;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
   --face:transparent;--label:var(--sombre);--trait:rgba(61,43,22,.32)}
 #b-oeil.montre{--face:#fff;--trait:var(--or);border-width:5px;font-weight:800;font-size:46px}
 /* Tant que l'oeil est ferme, le glyphe doit etre rendu en emoji couleur et
    non en caractere texte ; une fois le mot affiche, on revient a la police
-   du jeu. */
-#b-oeil:not(.montre) #ar-oeil{font-family:var(--emoji);line-height:1}
+   du jeu. L'ecart au libelle est pose en em, comme partout ailleurs. */
+#b-oeil:not(.montre) #ar-oeil{font-family:var(--emoji);line-height:1;margin-bottom:.16em}
+/* Maintenir n'a pas d'affordance : il faut le dire. */
+.ar-aide{font-weight:700;font-size:15px;letter-spacing:.03em;opacity:.55}
+#b-oeil.montre .ar-aide{display:none}
 .duo-actions{display:flex;gap:10px;height:26%;flex:none}
 .duo-actions .btn{flex:1;border-radius:22px;font-size:32px;border-width:4px}
 #b-trouve{--face:var(--sombre);--label:#ffeec2;--trait:var(--sombre)}
@@ -518,9 +529,16 @@ button{font-family:var(--font)}
       <div class="ar-quota">
         <div class="ar-nb" id="ar-nb">3</div>
         <div class="ar-nb-lib" id="ar-nb-lib">indices au plus</div>
+        <div class="ar-valeur" id="ar-valeur"></div>
       </div>
-      <button class="btn" id="b-oeil" aria-label="voir le mot"><span id="ar-oeil">👁️</span></button>
-      <button class="rappel" id="b-bannir">⛔ banni — le mot, sa famille, plus d'un mot, les gestes</button>
+      <button class="btn" id="b-oeil" aria-label="maintenir pour voir le mot"><span id="ar-oeil">👁️</span><span class="ar-aide">maintiens pour voir le mot</span></button>
+      <button class="rappel" id="b-bannir">
+        <span class="rappel-titre">⛔ indice banni si</span>
+        <span class="rappel-item">un mot de la même famille</span>
+        <span class="rappel-item">un geste</span>
+        <span class="rappel-item">un cri, une onomatopée</span>
+        <span class="rappel-item">un nom propre</span>
+      </button>
       <div class="duo-actions">
         <button class="btn" id="b-trouve">TROUVÉ</button>
         <button class="btn" id="b-rate">RATÉ</button>
@@ -587,6 +605,9 @@ button{font-family:var(--font)}
    OUTILS
    ============================================================ */
 const el = (id) => document.getElementById(id);
+/* Le mot le plus cher du corpus : sert a savoir si l'equipe menee peut
+   encore atteindre la cible en un seul tour. */
+const PLUS_CHER = Math.max.apply(null, Object.keys(CORPUS).map(Number));
 const melange = (a) => { a = a.slice(); for (let i=a.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; const t=a[i]; a[i]=a[j]; a[j]=t; } return a; };
 const CLE_LS = "kowo.equipes.v2";
 
@@ -672,7 +693,7 @@ const E = {
   ouvreur: null,
   t: null,                         // tour en cours
   log: [],
-  finProgrammee: null,
+  dernierTour: false,              // l'equipe menee joue sa derniere chance
   finie: false,
   resultat: null,
   tampon: null,
@@ -804,7 +825,7 @@ function commence(){
      pouvaient se representer au tour suivant. */
   E.catalogue = { 10: melange(CORPUS[10]), 20: melange(CORPUS[20]), 30: melange(CORPUS[30]) };
   E.log = [];
-  E.finProgrammee = null;
+  E.dernierTour = false;
   E.finie = false;
   E.resultat = null;
   E.ouvreur = Math.random() < .5 ? "lichen" : "braise";
@@ -850,7 +871,10 @@ function prendMot(v){
 function ouvreLeTour(){
   const op = E.ouvreur;
   const d  = donneur(op);
-  E.t = { ouvreur: op, donneurOuv: d, bans: 0, volPropose: false };
+  /* derniereChance : ce tour est celui accorde a l'equipe menee. C'est le
+     seul cas ou une equipe ouvre deux fois de suite, et le log le trace pour
+     que la verification puisse distinguer l'entorse assumee d'un bogue. */
+  E.t = { ouvreur: op, donneurOuv: d, bans: 0, volPropose: false, derniereChance: E.dernierTour };
   E.telephoneChez = null;                 // en transit
   E.propositions = tireLaMain();
   E.motChoisi = null;
@@ -1008,6 +1032,7 @@ function dessineArbitrage(){
   el("ar-roles").textContent = avatar(t.donneur).nom + " donne · " + avatar(t.devineur).nom + " devine";
   el("ar-nb").textContent = t.pari;
   el("ar-nb-lib").textContent = t.pari > 1 ? "indices au plus" : "indice au plus";
+  el("ar-valeur").textContent = "le mot vaut " + t.val + " points";
 
   E.motVisible = false;
   majOeil();
@@ -1046,22 +1071,42 @@ function conclut(issue, gagnant){
     E.rotVol[adv] = 1 - E.rotVol[adv];
   }
 
+  /* ---------- LA FIN ----------
+     Atteindre la cible ne suffit pas a gagner. Une fois qu'une equipe l'a
+     franchie, on se demande ce que l'equipe menee peut encore faire avec le
+     mot le plus cher du corpus :
+     - si cela ne lui suffit ni a atteindre la cible ni a passer devant, il
+       n'y a plus rien a jouer et la partie s'arrete ;
+     - sinon elle a droit a un dernier tour, qu'elle ouvre elle-meme — la
+       seule entorse assumee a l'alternance ;
+     - et tant que les deux equipes sont a egalite, on relance : une partie
+       ne se termine jamais sur un score nul. */
+  const meneur  = E.score.lichen >= E.score.braise ? "lichen" : "braise";
+  const suiveur = autre(meneur);
+  const egalite = E.score.lichen === E.score.braise;
+  const auMieux = E.score[suiveur] + PLUS_CHER;
   let suivant = autre(t.ouvreur);
   let finie   = false;
 
-  if (E.finProgrammee){
-    finie = true;                                   // le dernier tour vient d'etre joue
-  } else if (E.score.lichen >= CIBLE || E.score.braise >= CIBLE){
-    const tete = E.score.lichen >= E.score.braise ? "lichen" : "braise";
-    E.finProgrammee = tete;
-    suivant = autre(tete);                          // l'equipe menee ouvre le dernier tour
+  if (E.score[meneur] < CIBLE){
+    E.dernierTour = false;                       // la partie suit son cours
+  } else if (egalite){
+    E.dernierTour = false;                       // on rejoue pour se departager
+  } else if (E.dernierTour){
+    finie = true;                                // la derniere chance vient d'etre jouee
+  } else if (auMieux >= CIBLE && auMieux > E.score[meneur]){
+    E.dernierTour = true;
+    suivant = suiveur;                           // l'equipe menee ouvre son dernier tour
+  } else {
+    finie = true;                                // elle ne peut plus ni atteindre, ni passer
   }
 
   E.log.push({
     n: E.log.length + 1, ouvre: court(t.ouvreur), donneurOuv: avatar(t.donneurOuv).nom,
     mot: t.mot, val: t.val, pariOuv: t.pariOuv, contre: t.vol ? "o" : "n",
     pariRetenu: t.pari, preneur: court(t.preneur), donneurRetenu: avatar(t.donneur).nom,
-    issue: issue, points: court(gagnant), main: t.vol ? "o" : "n", bans: t.bans
+    issue: issue, points: court(gagnant), main: t.vol ? "o" : "n", bans: t.bans,
+    derniere: t.derniereChance ? "o" : "n"
   });
 
   E.ouvreur  = suivant;
@@ -1070,6 +1115,9 @@ function conclut(issue, gagnant){
 
   dessineResultat();
 }
+
+/* Deux equipes a egalite ne peuvent pas terminer la partie. */
+const egaliteEnCours = () => E.score.lichen === E.score.braise && E.score.lichen > 0;
 
 const EMOJI_ISSUE   = { "trouvé":"🎉", "quota épuisé":"💀", "indice refusé":"⛔" };
 const LIBELLE_ISSUE = { "trouvé":"mot trouvé", "quota épuisé":"quota épuisé", "indice refusé":"indice refusé" };
@@ -1082,10 +1130,10 @@ function dessineResultat(){
   el("re-points").textContent = "+" + r.val;
 
   el("re-suite").textContent =
-      r.finie         ? "Dernier tour joué. On compare."
-    : E.finProgrammee ? "Seuil franchi — " + court(E.ouvreur) + " ouvrent le dernier tour."
-    : E.t.vol         ? court(E.ouvreur) + " gardent la main (vol)."
-    :                   "Ouverture aux " + sansArt(E.ouvreur) + ".";
+      r.finie        ? "Plus rien à jouer. On compare."
+    : E.dernierTour  ? court(E.ouvreur) + " jouent leur dernière chance."
+    : egaliteEnCours() ? "Égalité — on relance pour se départager."
+    :                  "Ouverture aux " + sansArt(E.ouvreur) + ".";
 
   el("b-suite").textContent = E.finie ? "Voir le vainqueur" : "Tour suivant";
   va("s-resultat", r.gagnant);
@@ -1108,11 +1156,12 @@ function dessineFin(){
    ============================================================ */
 /* Plus de colonne « coup de fin » ni « coup du bannissement » : avec une
    validation unique en fin de manche, il n'y a plus de coup a numeroter. */
-const ENTETE_LOG = "tour|ouvre|donneur|mot|valeur|pari ouv|contré|pari retenu|preneur|donneur retenu|issue|points à|main par vol|bannissements";
+const ENTETE_LOG = "tour|ouvre|donneur|mot|valeur|pari ouv|contré|pari retenu|preneur|donneur retenu|issue|points à|main par vol|bannissements|dernière chance";
 
 const ligneLog = (l) => [l.n, l.ouvre, l.donneurOuv, l.mot, l.val, "pari " + l.pariOuv,
   "contré " + l.contre, "retenu " + l.pariRetenu, l.preneur, l.donneurRetenu, l.issue,
-  "+" + l.val + " " + l.points, "vol " + l.main, "bans " + l.bans].join(" | ");
+  "+" + l.val + " " + l.points, "vol " + l.main, "bans " + l.bans,
+  l.derniere === "o" ? "dernière chance" : "—"].join(" | ");
 
 function dessineLog(){
   el("lg-titre").textContent = "Log · " + E.log.length + " tours";
@@ -1138,7 +1187,7 @@ function dessineLog(){
 function copieLog(){
   const texte = ENTETE_LOG + "\n" + E.log.map((l) => [l.n, l.ouvre, l.donneurOuv, l.mot, l.val,
     l.pariOuv, l.contre, l.pariRetenu, l.preneur, l.donneurRetenu, l.issue,
-    l.points, l.main, l.bans].join("|")).join("\n");
+    l.points, l.main, l.bans, l.derniere].join("|")).join("\n");
   try {
     navigator.clipboard.writeText(texte);
     el("b-copier").textContent = "Copié ✓";
@@ -1162,7 +1211,23 @@ tap("b-laisser",      () => trancheLeContre(false, 0));
   if (VOL_AUTORISE && n < E.t.pariOuv) trancheLeContre(true, n);
 }));
 tap("b-nous-arbitrons", confirmeTampon);
-tap("b-oeil",         () => { E.motVisible = !E.motVisible; majOeil(); });
+/* L'oeil s'ouvre a l'appui et se referme des qu'on relache : le mot ne
+   peut jamais rester affiche sur l'appareil. */
+(function boutonOeil(){
+  const b = el("b-oeil");
+  const montre = (v) => {
+    if (!E.t || !E.t.mot) return;
+    E.motVisible = v;
+    majOeil();
+  };
+  b.addEventListener("pointerdown", (e) => {
+    if (bloque()) return;
+    b.setPointerCapture && b.setPointerCapture(e.pointerId);
+    montre(true);
+  });
+  ["pointerup","pointerleave","pointercancel"].forEach((ev) => b.addEventListener(ev, () => montre(false)));
+  b.addEventListener("contextmenu", (e) => e.preventDefault());
+})();
 tap("b-trouve",       () => conclut("trouvé", E.t.preneur));
 tap("b-rate",         () => conclut("quota épuisé", autre(E.t.preneur)));
 tap("b-bannir",       () => dessineBanni());

@@ -61,8 +61,8 @@ ne peut pas entrer.
 4. **Rien sous 44px** de zone tactile.
 5. **Le secret d'abord.** Les mots n'entrent dans le DOM qu'après le serment ; à
    l'ouverture d'un tour on vide les porteurs de secret du tour précédent
-   (`#ch-mots`, `#co-mot`, `#ar-mot`). Le bandeau n'affiche jamais les points en
-   jeu du tour.
+   (`#ch-mots`, `#co-mot`, `#ar-oeil` — qui revient à `👁️`). Le bandeau
+   n'affiche jamais les points en jeu du tour.
 6. **Un verrou anti double-tap de 400 ms** à chaque changement d'écran. Sans lui
    un doigt pressé enchaîne deux écrans et brûle un secret.
 
@@ -98,9 +98,22 @@ ne peut pas entrer.
 - **Une seule validation par manche**, à la fin — plus de verdict indice par
   indice, plus de braises à décompter, plus d'`Annuler`. L'écran d'arbitrage
   rappelle le contrat du tour et affiche le nombre d'indices en très gros.
-- **Le bouton 👁 occupe le milieu de l'écran d'arbitrage** ; au tap, le mot
-  prend sa place. Il faut le rendu emoji couleur (`--emoji`) tant que l'œil est
-  fermé, sinon le glyphe sort en caractère texte.
+- **Le bouton 👁 occupe le milieu de l'écran d'arbitrage** ; on le **maintient**,
+  on ne le tape pas — relâché, le mot disparaît, il ne peut donc jamais rester
+  affiché sur un appareil posé. Le geste n'ayant pas d'affordance, l'écran
+  l'énonce (`maintiens pour voir le mot`). Il faut le rendu emoji couleur
+  (`--emoji`) tant que l'œil est fermé, sinon le glyphe sort en caractère texte.
+- **L'écran d'arbitrage porte la valeur du mot** sous le nombre d'indices : les
+  arbitres doivent savoir ce qui est en jeu, et le devineur ne tient jamais
+  l'appareil pendant la manche.
+- **Les interdits sont une liste, pas une phrase** : même famille, geste,
+  cri/onomatopée, nom propre. Cette liste *est* le bouton de bannissement.
+- **La fin se décide sur ce que l'équipe menée peut encore faire** avec le mot
+  le plus cher (`PLUS_CHER`, lu dans le corpus) : si cela ne lui suffit ni à
+  atteindre `CIBLE` ni à passer devant, la partie s'arrête aussitôt ; sinon elle
+  ouvre un dernier tour. À égalité on relance — une partie ne finit jamais nulle.
+  Le tour de dernière chance est la **seule** entorse à l'alternance, et le log
+  le marque (colonne `derniere`) pour que la vérification la distingue d'un bogue.
 - **Le bandeau de score est visible partout dès que la partie tourne**, tampons
   compris. Le monochrome du tampon reste le signal « ne regarde pas », mais le
   score prime — demandé explicitement.

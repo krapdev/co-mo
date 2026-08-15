@@ -23,7 +23,7 @@ page.on('pageerror', (e) => plantages.push(e.message));
 await page.goto(JEU);
 await page.waitForTimeout(250);
 
-const EMOJI = '.geant,.avatar-xl,.re-emoji,.tv-avatars,.jeton .e,.grid8 .btn .e,.carte-eq .e,.ch-qui .e,#bandeau .av';
+const EMOJI = '.geant,.avatar-xl,.re-emoji,.tv-avatars,.jeton .e,.grid8 .btn .e,.carte-eq .e,.ch-qui .e,#bandeau .av,#ar-oeil';
 const EQUIPE = "E.choix=['mousserot','brumaille','tibiane','grognemousse'];";
 
 const ECRANS = {
@@ -78,7 +78,7 @@ if (reliefs.length) { ko++; console.log('  RELIEF SUR UNE TOUCHE :\n   - ' + rel
 else console.log('  aucune touche ne porte d\'ombre');
 
 console.log('— ecart emoji / libelle');
-for (const nom of ['grille', 'confirm', 'tampon', 'choix', 'resultat']) {
+for (const nom of ['grille', 'confirm', 'tampon', 'choix', 'arbitre', 'resultat']) {
   await page.evaluate(new Function(ECRANS[nom]));
   await page.waitForTimeout(120);
   const lignes = await page.evaluate((sel) => {

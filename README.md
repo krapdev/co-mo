@@ -99,22 +99,35 @@ c'est fini. L'écran ne change pas de forme du début à la fin.
 
 L'écran leur rappelle le contrat du tour et affiche en très gros la seule donnée
 qu'ils doivent tenir en tête : **le nombre d'indices** auquel l'équipe s'est
-engagée.
+engagée. La valeur du mot vient juste dessous — les arbitres doivent savoir ce
+qui est en jeu, et le devineur ne tient jamais l'appareil pendant la manche.
 
 ```
 les Cendres ont volé en 2 coups
 Tibiane donne · Grognemousse devine
               2
         INDICES AU PLUS
-      [        👁        ]   <- au tap, le mot prend sa place
-   ⛔ banni — le mot, sa famille…
+     le mot vaut 20 points
+   ┌───────────────────────┐
+   │           👁          │   <- maintenu, le mot prend sa place
+   │ maintiens pour voir…  │      relâché, il disparaît
+   └───────────────────────┘
+   ⛔ INDICE BANNI SI
+    · un mot de la même famille
+    · un geste
+    · un cri, une onomatopée
+    · un nom propre
       [ TROUVÉ ][ RATÉ ]
 ```
 
 - Le bouton 👁 occupe le milieu de l'écran. Il n'est pas décoratif : après un
   vol, le coéquipier du voleur n'a jamais vu le mot et doit pourtant arbitrer.
-- Le **rappel des interdits est le bouton de bannissement**, disponible en
-  permanence, jamais une étape obligatoire. Il garde sa confirmation plein écran.
+  **On le maintient**, on ne le tape pas : le mot ne peut jamais rester affiché
+  sur un appareil posé. Le geste n'a pas d'affordance, l'écran le dit donc.
+- Les interdits sont **énoncés en liste**, pas en phrase : on les relit d'un
+  coup d'œil au moment où l'on hésite.
+- Ce rappel **est** le bouton de bannissement, disponible en permanence, jamais
+  une étape obligatoire. Il garde sa confirmation plein écran.
 - Il n'y a plus d'`Annuler` : avec une validation unique, il n'y a plus d'état
   intermédiaire à reprendre.
 
@@ -137,11 +150,24 @@ Tibiane donne · Grognemousse devine
 Sur quatre tours, chacun des quatre joueurs ouvre donc exactement une fois et se
 voit proposer un vol exactement une fois. C'est vérifié par `outils/regles.mjs`.
 
-### 9. La fin
+### 9. La fin — on s'arrête quand il n'y a plus rien à jouer
 
-Franchir `CIBLE` **n'arrête pas la partie** — cela déclenche un dernier tour,
-ouvert par l'équipe menée. C'est la seule entorse assumée à l'alternance. Le
-score après ce tour départage.
+Franchir `CIBLE` **n'arrête pas la partie** : on regarde ce que l'équipe menée
+peut encore faire, au mieux, avec le mot le plus cher du corpus (30).
+
+| Situation de l'équipe menée | Ce qui se passe |
+| --- | --- |
+| au mieux elle atteint `CIBLE` **et** passe devant | elle ouvre un **dernier tour** |
+| au mieux elle égale, ou reste sous `CIBLE` | la partie s'**arrête aussitôt** |
+| les deux équipes sont à **égalité** | on **relance** jusqu'à départager |
+
+Ce dernier tour est la seule entorse assumée à l'alternance : l'équipe menée
+ouvre, même si elle vient déjà d'ouvrir. Le log le marque d'une colonne
+« dernière chance », ce qui permet à `regles.mjs` de distinguer l'entorse voulue
+d'un bogue d'alternance.
+
+Une partie ne se termine donc **jamais sur une égalité**, ni sur un score qui
+n'aurait pas atteint la cible. Les deux sont vérifiés.
 
 ## Les touches
 
@@ -203,10 +229,12 @@ le pari d'ouverture, le contre, l'issue, et une colonne qui compte les
 
 Cette colonne n'est pas décorative : le bannissement est passé d'étape
 obligatoire à bouton facultatif. Si le taux tombe près de zéro, l'arbitrage a
-disparu du jeu et il faudra en reparler. Les colonnes « coup de fin » et « coup
-du bannissement » ont disparu : avec une validation unique, il n'y a plus de coup
-à numéroter. « Copier le log » met le tout dans le
-presse-papier en colonnes séparées par des `|`, prêt pour un tableur.
+disparu du jeu et il faudra en reparler. Une dernière colonne marque les tours
+de **dernière chance** — sans elle, une équipe qui ouvre deux fois de suite se
+lit comme un bogue. Les colonnes « coup de fin » et « coup du bannissement » ont
+disparu : avec une validation unique, il n'y a plus de coup à numéroter.
+« Copier le log » met le tout dans le presse-papier en colonnes séparées par des
+`|`, prêt pour un tableur.
 
 ## Vérifier
 
@@ -221,10 +249,12 @@ node rendu.mjs         # captures 390x844 de tous les écrans
 ```
 
 Toute modification des règles passe par `regles.mjs` avant d'être poussée. Il
-vérifie la conservation des points, le décompte de la réserve, l'unicité des mots
-joués, le vol strictement plus court, le budget de passages de téléphone, la
-traçabilité des bannissements, et qu'aucun mot ne traîne dans le DOM pendant un
-tampon.
+vérifie la conservation des points, l'unicité des mots joués **et proposés**, les
+trois alternances, le vol strictement plus court, le budget de passages de
+téléphone, la traçabilité des bannissements, et qu'aucun mot ne traîne dans le
+DOM pendant un tampon. Il rejoue en plus quatre fins explicites — écart
+insurmontable, dernière chance, égalité relancée — parce qu'elles sont trop rares
+pour tomber d'elles-mêmes dans le tirage.
 
 ## Publier
 
