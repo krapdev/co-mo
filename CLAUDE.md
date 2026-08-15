@@ -87,12 +87,20 @@ ne peut pas entrer.
 - **Le bouton `log`** n'apparaît qu'entre les temps forts (`grille`, `confirm`,
   `tirage`, `resultat`, `fin`) : ailleurs il chevauchait une zone tactile
   décisive.
-- **Le donneur tourne pour les deux équipes concernées** — celle qui a ouvert et
-  celle qui a joué. Avant, seule l'équipe preneuse tournait : une équipe volée
-  gardait le même donneur et son coéquipier ne donnait jamais.
+- **Trois alternances indépendantes, qu'un vol ne perturbe jamais** : les
+  équipes alternent l'ouverture ; le donneur alterne dans chaque équipe ; la
+  proposition de vol alterne dans l'équipe qui la reçoit. Sur quatre tours,
+  chacun ouvre une fois et se voit proposer un vol une fois. Seule entorse
+  assumée : le dernier tour, donné à l'équipe menée.
 - **Le catalogue est mélangé une fois au début de la partie**, puis consommé
-  dans l'ordre. Avant, chaque tour tirait 5 mots au hasard et n'en consommait
-  qu'un : les quatre écartés pouvaient revenir au tour suivant.
+  dans l'ordre, et **jamais recyclé** : un mot n'est proposé qu'une seule fois
+  par partie, joué ou non.
+- **Une seule validation par manche**, à la fin — plus de verdict indice par
+  indice, plus de braises à décompter, plus d'`Annuler`. L'écran d'arbitrage
+  rappelle le contrat du tour et affiche le nombre d'indices en très gros.
+- **Le bouton 👁 occupe le milieu de l'écran d'arbitrage** ; au tap, le mot
+  prend sa place. Il faut le rendu emoji couleur (`--emoji`) tant que l'œil est
+  fermé, sinon le glyphe sort en caractère texte.
 - **Le bandeau de score est visible partout dès que la partie tourne**, tampons
   compris. Le monochrome du tampon reste le signal « ne regarde pas », mais le
   score prime — demandé explicitement.

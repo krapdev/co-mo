@@ -336,16 +336,18 @@ button{font-family:var(--font)}
 /* ============================================================
    ARBITRAGE - une seule question, deux boutons, ecran stable.
    ============================================================ */
-.barre{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:none}
-.braises{display:flex;gap:7px;align-items:center}
-.braises i{width:28px;height:28px;border-radius:50%;background:transparent;
-  border:3px solid rgba(61,43,22,.28)}
-.braises i.vive{background:var(--braise-vive);border-color:var(--braise-vive)}
-.barre-droite{display:flex;gap:8px;align-items:center}
+/* Le contrat du tour, rappele aux arbitres : qui joue, en combien de coups,
+   qui donne et qui devine. Sans ce rappel ils arbitrent a l'aveugle. */
+.ar-contrat{flex:none;text-align:center;font-weight:800;font-size:22px;line-height:1.2}
+.ar-roles{flex:none;text-align:center;font-weight:700;font-size:15px;line-height:1.25;opacity:.7}
+/* Le nombre d'indices prime sur tout le reste : c'est la seule donnee que
+   les arbitres doivent tenir en tete pendant la manche. */
+.ar-quota{flex:none;text-align:center;margin-top:2px}
+.ar-nb{font-weight:800;font-size:104px;line-height:.9}
+.ar-nb-lib{font-weight:700;font-size:15px;letter-spacing:.18em;text-transform:uppercase;opacity:.7}
 .mini-btn{min-height:44px;padding-inline:14px;border-radius:14px;border-width:2px;
   font-weight:700;font-size:15px;--face:transparent;--label:var(--sombre);--trait:rgba(61,43,22,.32)}
 .mini-btn:disabled{opacity:.28}
-#b-oeil{min-width:56px;font-size:22px}
 
 /* Le rappel des interdits EST le bouton de bannissement : cadre parchemin,
    pas un bouton colore. On le lit quand on hesite, on le tape quand on tranche. */
@@ -357,11 +359,18 @@ button{font-family:var(--font)}
 }
 .rappel:active{filter:brightness(.95)}
 
-.ar-question{font-weight:800;font-size:44px;line-height:1.05;padding:0 6px}
-.ar-mot{display:none}
-.ar-mot.on{display:block;font-weight:800;font-size:60px;line-height:1.05;padding:0 6px}
-.ar-mot.on + .ar-question{display:none}
-.duo-actions{display:flex;gap:10px;height:33%;flex:none}
+/* L'oeil occupe le milieu de l'ecran : au tap il cede la place au mot.
+   Apres un vol, le coequipier du voleur n'a jamais vu le mot et doit
+   pourtant arbitrer - ce bouton n'est pas un confort, c'est la regle. */
+#b-oeil{flex:1;min-height:110px;border-radius:22px;font-size:56px;
+  display:flex;align-items:center;justify-content:center;
+  --face:transparent;--label:var(--sombre);--trait:rgba(61,43,22,.32)}
+#b-oeil.montre{--face:#fff;--trait:var(--or);border-width:5px;font-weight:800;font-size:46px}
+/* Tant que l'oeil est ferme, le glyphe doit etre rendu en emoji couleur et
+   non en caractere texte ; une fois le mot affiche, on revient a la police
+   du jeu. */
+#b-oeil:not(.montre) #ar-oeil{font-family:var(--emoji);line-height:1}
+.duo-actions{display:flex;gap:10px;height:26%;flex:none}
 .duo-actions .btn{flex:1;border-radius:22px;font-size:32px;border-width:4px}
 #b-trouve{--face:var(--sombre);--label:#ffeec2;--trait:var(--sombre)}
 #b-rate{--face:var(--creme);--label:var(--sombre);--trait:rgba(61,43,22,.45)}
@@ -503,19 +512,15 @@ button{font-family:var(--font)}
     </div>
 
     <!-- ================= ARBITRAGE ================= -->
-    <div class="screen" id="s-arbitre" style="gap:9px">
-      <div class="barre">
-        <div class="braises" id="ar-braises"></div>
-        <div class="barre-droite">
-          <button class="btn mini-btn" id="b-annuler">annuler</button>
-          <button class="btn mini-btn" id="b-oeil" aria-label="voir le mot">👁</button>
-        </div>
+    <div class="screen" id="s-arbitre" style="gap:10px">
+      <div class="ar-contrat" id="ar-contrat"></div>
+      <div class="ar-roles" id="ar-roles"></div>
+      <div class="ar-quota">
+        <div class="ar-nb" id="ar-nb">3</div>
+        <div class="ar-nb-lib" id="ar-nb-lib">indices au plus</div>
       </div>
+      <button class="btn" id="b-oeil" aria-label="voir le mot"><span id="ar-oeil">👁️</span></button>
       <button class="rappel" id="b-bannir">⛔ banni — le mot, sa famille, plus d'un mot, les gestes</button>
-      <div class="grow centre">
-        <div class="ar-mot" id="ar-mot"></div>
-        <div class="ar-question" id="ar-question"></div>
-      </div>
       <div class="duo-actions">
         <button class="btn" id="b-trouve">TROUVÉ</button>
         <button class="btn" id="b-rate">RATÉ</button>
@@ -660,7 +665,8 @@ const E = {
   choix: [],                       // ids des avatars, dans l'ordre : 0-1 lichen, 2-3 braise
   reprise: false,
   equipes: null,
-  rot: { lichen:0, braise:0 },     // curseur de donneur, par equipe
+  rot: { lichen:0, braise:0 },     // qui ouvre et donne, par equipe
+  rotVol: { lichen:0, braise:0 },  // a qui l'on propose de voler, par equipe
   score: { lichen:0, braise:0 },
   catalogue: null,                 // mots melanges au debut, consommes dans l'ordre
   ouvreur: null,
@@ -673,15 +679,16 @@ const E = {
   tamponTeinte: null,
   tamponChez: null,
   telephoneChez: null,           // equipe qui tient l'appareil, en ce moment
-  braises: 0,
-  coup: 1,
-  annulable: false,
   propositions: [],
   motChoisi: null
 };
 
 const joueur  = (t, i) => E.equipes[t][i];
-const donneur = (t) => joueur(t, E.rot[t]);
+/* Deux roles, deux rotations independantes : ouvrir le tour et se voir
+   proposer un vol. Sans cette separation, le meme joueur d'une equipe
+   recevait toutes les propositions de vol de la partie. */
+const donneur    = (t) => joueur(t, E.rot[t]);
+const donneurVol = (t) => joueur(t, E.rotVol[t]);
 
 /* ============================================================
    MISE EN PLACE - une seule grille, quatre etapes explicites.
@@ -788,7 +795,8 @@ function commence(){
   E.equipes = { lichen:[E.choix[0], E.choix[1]], braise:[E.choix[2], E.choix[3]] };
   try { localStorage.setItem(CLE_LS, JSON.stringify(E.choix)); } catch(e){}
 
-  E.rot   = { lichen:0, braise:0 };
+  E.rot    = { lichen:0, braise:0 };
+  E.rotVol = { lichen:0, braise:0 };
   E.score = { lichen:0, braise:0 };
   /* Le catalogue est melange UNE FOIS au debut de la partie, puis consomme
      dans l'ordre. Auparavant chaque tour retirait 5 mots au hasard et n'en
@@ -812,19 +820,26 @@ function commence(){
    ============================================================ */
 function tireLaMain(){
   const out = [];
-  Object.keys(TIRAGE).forEach((v) => {
-    if (E.catalogue[v].length < TIRAGE[v]) E.catalogue[v] = refaitPalier(+v);
-    for (let i = 0; i < TIRAGE[v]; i++) out.push({ m: E.catalogue[v].shift(), v: +v });
+  [10, 20, 30].forEach((v) => {
+    for (let i = 0; i < TIRAGE[v]; i++){
+      const w = prendMot(v);
+      if (w) out.push(w);
+    }
   });
-  return melange(out);   /* les paliers sont melanges entre eux a l'affichage */
+  /* Un palier epuise n'est jamais recycle : on complete depuis les autres.
+     Un mot n'est donc propose qu'une seule fois par partie, joue ou non. */
+  while (out.length < 5){
+    const w = prendMot(null);
+    if (!w) break;
+    out.push(w);
+  }
+  return melange(out);
 }
 
-/* Palier epuise - au-dela d'une vingtaine de tours : on le refait, sans
-   jamais y remettre un mot deja joue. */
-function refaitPalier(v){
-  const joues = E.log.map((l) => l.mot);
-  const reste = CORPUS[v].filter((m) => joues.indexOf(m) < 0);
-  return melange(reste.length >= TIRAGE[v] ? reste : CORPUS[v].slice());
+function prendMot(v){
+  if (v && E.catalogue[v].length) return { m: E.catalogue[v].shift(), v: v };
+  for (const p of [10, 20, 30]) if (E.catalogue[p].length) return { m: E.catalogue[p].shift(), v: p };
+  return null;
 }
 
 /* ============================================================
@@ -835,7 +850,7 @@ function refaitPalier(v){
 function ouvreLeTour(){
   const op = E.ouvreur;
   const d  = donneur(op);
-  E.t = { ouvreur: op, donneurOuv: d, bans: 0, coupBan: null };
+  E.t = { ouvreur: op, donneurOuv: d, bans: 0, volPropose: false };
   E.telephoneChez = null;                 // en transit
   E.propositions = tireLaMain();
   E.motChoisi = null;
@@ -845,7 +860,7 @@ function ouvreLeTour(){
      meme sur un ecran masque. */
   el("ch-mots").innerHTML = "";
   el("co-mot").textContent = "";
-  el("ar-mot").textContent = "";
+  el("ar-oeil").textContent = "👁️";
 
   /* Le telephone sort des mains des arbitres du tour precedent : il doit
      rejoindre nommement le donneur d'ouverture. Son coequipier devinera,
@@ -919,8 +934,9 @@ function annoncePari(n){
   if (n === 1){ trancheLeContre(false, 0); return; }
 
   const adv = autre(E.t.ouvreur);
-  const d   = donneur(adv);
+  const d   = donneurVol(adv);
   E.t.donneurAdv = d;
+  E.t.volPropose = true;
 
   tamponIndividuel(adv, d, "Je suis " + avatar(d).nom + ", je jure de ne rien avoir vu",
                    dessineContre);
@@ -961,9 +977,7 @@ function trancheLeContre(vol, n){
   t.devineur = E.equipes[t.preneur].filter((x) => x !== t.donneur)[0];
   t.arbitre  = autre(t.preneur);
 
-  E.braises   = t.pari;
-  E.coup      = 1;
-  E.annulable = false;
+  E.motVisible = false;
 
   /* Le telephone est-il deja dans le camp qui arbitre ? Sans vol apres un
      contre, oui : aucun passage. Apres un vol, ou apres un pari involable,
@@ -979,44 +993,31 @@ function trancheLeContre(vol, n){
 }
 
 /* ============================================================
-   4. MANCHE - une seule question, un seul tap par coup.
-   L'ecran ne change pas de forme pendant toute la manche.
+   4. MANCHE - une seule validation, a la fin.
+   Les arbitres ne tranchent plus indice par indice : la manche se joue a
+   voix haute, puis ils tapent une seule fois, `Trouve` ou `Rate`.
+   L'ecran ne change pas de forme du debut a la fin.
    ============================================================ */
 function dessineArbitrage(){
   const t = E.t;
+  const coups = t.pari + (t.pari > 1 ? " coups" : " coup");
 
-  const br = el("ar-braises");
-  br.innerHTML = "";
-  for (let i = 0; i < t.pari; i++){
-    const p = document.createElement("i");
-    if (i < E.braises) p.className = "vive";
-    br.appendChild(p);
-  }
+  el("ar-contrat").textContent = t.vol
+    ? court(t.preneur) + " ont volé en " + coups
+    : court(t.preneur) + " jouent en " + coups;
+  el("ar-roles").textContent = avatar(t.donneur).nom + " donne · " + avatar(t.devineur).nom + " devine";
+  el("ar-nb").textContent = t.pari;
+  el("ar-nb-lib").textContent = t.pari > 1 ? "indices au plus" : "indice au plus";
 
-  el("b-annuler").disabled = !E.annulable;
-  el("ar-question").textContent = "La réponse de " + avatar(t.devineur).nom + " ?";
-  el("ar-mot").textContent = t.mot;
-  el("ar-mot").classList.remove("on");
-
+  E.motVisible = false;
+  majOeil();
   va("s-arbitre", null);
 }
 
-function rateLaReponse(){
-  const reste = E.braises - 1;
-  if (reste <= 0){ conclut("quota épuisé", autre(E.t.preneur)); return; }
-  E.braises   = reste;
-  E.coup     += 1;
-  E.annulable = true;
-  dessineArbitrage();
-}
-
-/* Un `Raté` mal tape coute une braise : on peut le reprendre, une fois. */
-function annule(){
-  if (!E.annulable) return;
-  E.braises  += 1;
-  E.coup      = Math.max(1, E.coup - 1);
-  E.annulable = false;
-  dessineArbitrage();
+/* Le mot prend la place de l'oeil, et inversement. */
+function majOeil(){
+  el("b-oeil").classList.toggle("montre", E.motVisible);
+  el("ar-oeil").textContent = E.motVisible ? E.t.mot : "👁️";
 }
 
 function dessineBanni(){
@@ -1032,16 +1033,20 @@ function conclut(issue, gagnant){
 
   E.score[gagnant] += t.val;
 
-  /* Le donneur tourne pour les deux equipes concernees : celle qui a ouvert
-     et celle qui a joue le mot. Sans cela, une equipe volee gardait le meme
-     donneur - se faire voler trois fois de suite, c'etait la meme personne
-     qui choisissait a chaque fois et son coequipier ne donnait jamais.
-     Sans vol les deux sont la meme equipe : on ne tourne qu'une fois. */
-  const tournent = t.ouvreur === t.preneur ? [t.ouvreur] : [t.ouvreur, t.preneur];
-  tournent.forEach((k) => { E.rot[k] = 1 - E.rot[k]; });
+  /* EQUITE — trois alternances independantes, qu'un vol ne perturbe jamais.
+     1. l'ouverture passe a l'autre equipe, vol ou pas ;
+     2. dans l'equipe qui vient d'ouvrir, le donneur suivant est l'autre ;
+     3. dans l'equipe a qui l'on a propose de voler, la prochaine
+        proposition ira a l'autre.
+     Sur quatre tours, chacun des quatre joueurs ouvre donc exactement une
+     fois, et se voit proposer un vol exactement une fois. */
+  E.rot[t.ouvreur] = 1 - E.rot[t.ouvreur];
+  if (t.volPropose) {
+    const adv = autre(t.ouvreur);
+    E.rotVol[adv] = 1 - E.rotVol[adv];
+  }
 
-  /* Le vol garde la main ; sinon l'ouverture passe a l'autre equipe. */
-  let suivant = t.vol ? t.preneur : autre(t.ouvreur);
+  let suivant = autre(t.ouvreur);
   let finie   = false;
 
   if (E.finProgrammee){
@@ -1056,8 +1061,7 @@ function conclut(issue, gagnant){
     n: E.log.length + 1, ouvre: court(t.ouvreur), donneurOuv: avatar(t.donneurOuv).nom,
     mot: t.mot, val: t.val, pariOuv: t.pariOuv, contre: t.vol ? "o" : "n",
     pariRetenu: t.pari, preneur: court(t.preneur), donneurRetenu: avatar(t.donneur).nom,
-    issue: issue, coup: E.coup, points: court(gagnant), main: t.vol ? "o" : "n",
-    bans: t.bans, coupBan: t.coupBan
+    issue: issue, points: court(gagnant), main: t.vol ? "o" : "n", bans: t.bans
   });
 
   E.ouvreur  = suivant;
@@ -1102,12 +1106,13 @@ function dessineFin(){
    l'effet du passage du bannissement en bouton facultatif : si le taux
    tombe a zero, l'arbitrage a disparu du jeu.
    ============================================================ */
-const ENTETE_LOG = "tour|ouvre|donneur|mot|valeur|pari ouv|contré|pari retenu|preneur|donneur retenu|issue|coup fin|points à|main par vol|bannissements|coup du bannissement";
+/* Plus de colonne « coup de fin » ni « coup du bannissement » : avec une
+   validation unique en fin de manche, il n'y a plus de coup a numeroter. */
+const ENTETE_LOG = "tour|ouvre|donneur|mot|valeur|pari ouv|contré|pari retenu|preneur|donneur retenu|issue|points à|main par vol|bannissements";
 
 const ligneLog = (l) => [l.n, l.ouvre, l.donneurOuv, l.mot, l.val, "pari " + l.pariOuv,
   "contré " + l.contre, "retenu " + l.pariRetenu, l.preneur, l.donneurRetenu, l.issue,
-  "coup " + l.coup, "+" + l.val + " " + l.points, "vol " + l.main,
-  "bans " + l.bans, "coup ban " + (l.coupBan === null ? "-" : l.coupBan)].join(" | ");
+  "+" + l.val + " " + l.points, "vol " + l.main, "bans " + l.bans].join(" | ");
 
 function dessineLog(){
   el("lg-titre").textContent = "Log · " + E.log.length + " tours";
@@ -1132,8 +1137,8 @@ function dessineLog(){
 
 function copieLog(){
   const texte = ENTETE_LOG + "\n" + E.log.map((l) => [l.n, l.ouvre, l.donneurOuv, l.mot, l.val,
-    l.pariOuv, l.contre, l.pariRetenu, l.preneur, l.donneurRetenu, l.issue, l.coup,
-    l.points, l.main, l.bans, l.coupBan === null ? "" : l.coupBan].join("|")).join("\n");
+    l.pariOuv, l.contre, l.pariRetenu, l.preneur, l.donneurRetenu, l.issue,
+    l.points, l.main, l.bans].join("|")).join("\n");
   try {
     navigator.clipboard.writeText(texte);
     el("b-copier").textContent = "Copié ✓";
@@ -1157,11 +1162,11 @@ tap("b-laisser",      () => trancheLeContre(false, 0));
   if (VOL_AUTORISE && n < E.t.pariOuv) trancheLeContre(true, n);
 }));
 tap("b-nous-arbitrons", confirmeTampon);
-tap("b-annuler",      annule);
+tap("b-oeil",         () => { E.motVisible = !E.motVisible; majOeil(); });
 tap("b-trouve",       () => conclut("trouvé", E.t.preneur));
-tap("b-rate",         rateLaReponse);
+tap("b-rate",         () => conclut("quota épuisé", autre(E.t.preneur)));
 tap("b-bannir",       () => dessineBanni());
-tap("b-banni-ok",     () => { E.t.bans += 1; E.t.coupBan = E.coup; conclut("indice refusé", E.t.arbitre); });
+tap("b-banni-ok",     () => { E.t.bans += 1; conclut("indice refusé", E.t.arbitre); });
 tap("b-banni-retour", dessineArbitrage);
 tap("b-suite",        () => { if (E.finie) dessineFin(); else ouvreLeTour(); });
 tap("b-rejouer",      () => { E.reprise = true; dessineConfirmation(); });
@@ -1191,20 +1196,6 @@ function redessineCourant(){
   };
   return table[ecranCourant] || dessineMiseEnPlace;
 }
-
-/* Le bouton 👁 est obligatoire, pas decoratif : apres un vol, le coequipier
-   du voleur n'a jamais vu le mot et doit pourtant arbitrer. Le mot ne
-   s'affiche que pendant l'appui, jamais en persistant. */
-(function boutonOeil(){
-  const b = el("b-oeil");
-  const montre = (v) => {
-    if (!E.t || !E.t.mot) return;
-    el("ar-mot").classList.toggle("on", v);
-  };
-  b.addEventListener("pointerdown", (e) => { b.setPointerCapture && b.setPointerCapture(e.pointerId); montre(true); });
-  ["pointerup","pointerleave","pointercancel"].forEach((ev) => b.addEventListener(ev, () => montre(false)));
-  b.addEventListener("contextmenu", (e) => e.preventDefault());
-})();
 
 /* ============================================================
    DEMARRAGE

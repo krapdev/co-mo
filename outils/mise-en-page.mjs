@@ -33,7 +33,7 @@ const ECRANS = {
   tampon:    EQUIPE + "commence();ouvreLeTour();",
   choix:     EQUIPE + "commence();ouvreLeTour();confirmeTampon();",
   contre:    EQUIPE + "commence();ouvreLeTour();confirmeTampon();E.motChoisi=0;annoncePari(3);confirmeTampon();",
-  arbitre:   EQUIPE + "commence();ouvreLeTour();confirmeTampon();E.motChoisi=0;annoncePari(3);confirmeTampon();trancheLeContre(false,0);",
+  arbitre:   EQUIPE + "commence();ouvreLeTour();confirmeTampon();E.motChoisi=0;annoncePari(3);confirmeTampon();trancheLeContre(false,0);dessineArbitrage();",
   resultat:  EQUIPE + "commence();ouvreLeTour();confirmeTampon();E.motChoisi=0;annoncePari(3);confirmeTampon();trancheLeContre(false,0);conclut('trouvé',E.t.preneur);",
   fin:       EQUIPE + "commence();E.score.lichen=100;dessineFin();",
 };

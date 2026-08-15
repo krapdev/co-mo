@@ -33,21 +33,32 @@ const r = await page.evaluate((PARTIES) => {
     const mots = E.log.map((l) => l.mot);
     if (new Set(mots).size !== mots.length) echecs.push('un mot a ete joue deux fois');
 
-    /* Le donneur tourne pour les deux equipes concernees. Apres N tours,
-       la rotation d'une equipe vaut le nombre de fois ou elle a ouvert ou
-       joue, modulo 2. */
+    /* EQUITE — trois alternances qu'un vol ne doit jamais perturber. */
     for (const k of ['lichen', 'braise']) {
-      const fois = E.log.filter((l) => l.ouvre === EQUIPES[k].court || l.preneur === EQUIPES[k].court).length;
-      if (E.rot[k] !== fois % 2) echecs.push(`rotation ${k} : ${E.rot[k]}, attendu ${fois % 2}`);
+      const ouvertures = E.log.filter((l) => l.ouvre === EQUIPES[k].court).length;
+      if (E.rot[k] !== ouvertures % 2) echecs.push(`rotation ${k} : ${E.rot[k]}, attendu ${ouvertures % 2}`);
+    }
+    /* L'ouverture alterne strictement, vol ou pas. Seule exception assumee :
+       le dernier tour, volontairement donne a l'equipe menee - on l'exclut
+       donc de la comparaison. */
+    const jusqua = E.finie ? E.log.length - 1 : E.log.length;
+    for (let i = 1; i < jusqua; i++) {
+      if (E.log[i].ouvre === E.log[i - 1].ouvre) echecs.push('deux ouvertures de suite pour la meme equipe');
+    }
+    /* Chaque joueur ouvre a son tour dans son equipe. */
+    for (const k of ['lichen', 'braise']) {
+      const donneurs = E.log.filter((l) => l.ouvre === EQUIPES[k].court).map((l) => l.donneurOuv);
+      for (let i = 1; i < donneurs.length; i++) {
+        if (donneurs[i] === donneurs[i - 1]) echecs.push(`${k} : deux ouvertures de suite par ${donneurs[i]}`);
+      }
     }
 
     const d = E.log[E.log.length - 1];
     if (d.contre === 'o' && d.pariRetenu >= d.pariOuv) echecs.push('vol non strictement plus court');
     if (d.issue === 'trouvé' && d.preneur !== d.points) echecs.push('mot trouve non credite au preneur');
     if (d.issue !== 'trouvé' && d.preneur === d.points) echecs.push(`${d.issue} credite au preneur`);
-    if (d.coup > d.pariRetenu) echecs.push(`coup ${d.coup} > pari retenu ${d.pariRetenu}`);
-    if (d.issue === 'indice refusé' && (d.bans !== 1 || d.coupBan === null)) echecs.push('bannissement non trace');
-    if (d.issue !== 'indice refusé' && (d.bans !== 0 || d.coupBan !== null)) echecs.push('bannissement fantome');
+    if (d.issue === 'indice refusé' && d.bans !== 1) echecs.push('bannissement non trace');
+    if (d.issue !== 'indice refusé' && d.bans !== 0) echecs.push('bannissement fantome');
   };
 
   for (let g = 0; g < PARTIES && echecs.length < 6; g++) {
@@ -55,7 +66,9 @@ const r = await page.evaluate((PARTIES) => {
     E.reprise = false;
     commence();
 
-    let garde = 0, precedents = [];
+    let garde = 0;
+    const vus = new Set();          // tous les mots deja proposes cette partie
+    const volsProposes = { lichen: [], braise: [] };
     while (!E.finie && garde++ < 400) {
       ouvreLeTour();
       /* Le tour s'ouvre sur un tampon nominatif : rien du secret n'est
@@ -63,18 +76,19 @@ const r = await page.evaluate((PARTIES) => {
       if (ecranCourant !== 's-tampon') echecs.push("le tour ne s'ouvre pas sur un tampon");
       if (document.getElementById('ch-mots').textContent.trim() !== '') echecs.push('mots dans le DOM avant le serment');
       if (document.getElementById('co-mot').textContent.trim() !== '') echecs.push('mot du contre remanent');
-      if (document.getElementById('ar-mot').textContent.trim() !== '') echecs.push("mot de l'oeil remanent");
+      if (document.getElementById('ar-oeil').textContent.trim() !== '👁️') echecs.push("mot de l'oeil remanent");
 
       let passages = 0;
       passages++; confirmeTampon();
       if (ecranCourant !== 's-choix') echecs.push("le serment d'ouverture ne mene pas au choix");
 
       /* Catalogue melange au depart : les 5 mots du tour sont distincts, et
-         aucun ne reapparait d'un tour a l'autre. */
+         aucun mot n'est propose deux fois de toute la partie. */
       const cinq = E.propositions.map((w) => w.m);
       if (new Set(cinq).size !== 5) echecs.push('doublon dans les 5 mots proposes');
-      if (precedents.some((m) => cinq.includes(m))) echecs.push('un mot revient au tour suivant');
-      precedents = cinq;
+      const revus = cinq.filter((m) => vus.has(m));
+      if (revus.length) echecs.push('mot deja propose cette partie : ' + revus[0]);
+      cinq.forEach((m) => vus.add(m));
 
       E.motChoisi = (Math.random() * E.propositions.length) | 0;
       const p = 1 + ((Math.random() * 3) | 0);
@@ -88,6 +102,12 @@ const r = await page.evaluate((PARTIES) => {
         if (ecranCourant !== 's-tampon') echecs.push("pas de tampon d'ouverture");
         passages++; confirmeTampon();
         if (ecranCourant !== 's-contre') echecs.push('le serment ne mene pas au contre');
+        /* La proposition de vol alterne dans l'equipe qui la recoit. */
+        const adv = autre(E.t.ouvreur);
+        const recu = avatar(E.t.donneurAdv).nom;
+        const hist = volsProposes[adv];
+        if (hist.length && hist[hist.length - 1] === recu) echecs.push(`${adv} : deux propositions de vol de suite a ${recu}`);
+        hist.push(recu);
         const vole = VOL_AUTORISE && Math.random() < 0.4;
         if (vole) { vols++; trancheLeContre(true, 1 + ((Math.random() * (p - 1)) | 0)); }
         else trancheLeContre(false, 0);
@@ -105,11 +125,12 @@ const r = await page.evaluate((PARTIES) => {
       passagesVol += E.t.vol ? passages : 0;
       passagesSansVol += E.t.vol ? 0 : passages;
 
-      while (ecranCourant === 's-arbitre') {
-        if (Math.random() < 0.12) { E.t.bans += 1; E.t.coupBan = E.coup; bans++; conclut('indice refusé', E.t.arbitre); break; }
-        if (Math.random() < 0.5) { conclut('trouvé', E.t.preneur); break; }
-        rateLaReponse();
-      }
+      /* Une seule validation, a la fin de la manche. */
+      const tirage = Math.random();
+      if (tirage < 0.12) { E.t.bans += 1; bans++; conclut('indice refusé', E.t.arbitre); }
+      else if (tirage < 0.56) conclut('trouvé', E.t.preneur);
+      else conclut('quota épuisé', autre(E.t.preneur));
+      if (ecranCourant !== 's-resultat') echecs.push('la validation ne conclut pas le tour');
 
       tours++;
       verifie();
@@ -143,11 +164,10 @@ const fin = await page.evaluate(() => {
         else trancheLeContre(false, 0);
       }
       if (arme !== null) { apres++; if (ouvreurDernier === null) ouvreurDernier = E.t.ouvreur; }
-      while (ecranCourant === 's-arbitre') {
-        if (Math.random() < .12) { E.t.bans++; E.t.coupBan = E.coup; conclut('indice refusé', E.t.arbitre); break; }
-        if (Math.random() < .5) { conclut('trouvé', E.t.preneur); break; }
-        rateLaReponse();
-      }
+      const d = Math.random();
+      if (d < .12) { E.t.bans++; conclut('indice refusé', E.t.arbitre); }
+      else if (d < .56) conclut('trouvé', E.t.preneur);
+      else conclut('quota épuisé', autre(E.t.preneur));
       if (arme === null && E.finProgrammee) arme = E.finProgrammee;
     }
     out.push({ ok: E.finie && apres === 1 && ouvreurDernier === autre(arme) });

@@ -90,19 +90,33 @@ réelle — s'il est déjà chez les arbitres, il ne bouge pas.
 Il n'y a **pas d'écran de révélation** : le donneur retenu connaît toujours le
 mot, soit qu'il l'ait choisi, soit qu'il l'ait mémorisé au contre.
 
-### 6. La manche — une seule question
+### 6. La manche — une seule validation, à la fin
 
-Le téléphone reste chez les arbitres. Un coup = un indice dit à voix haute, une
-réponse dite à voix haute, et **un seul tap** : `Trouvé` ou `Raté`. Un `Raté`
-éteint une braise. L'écran ne change pas de forme de toute la manche.
+Le téléphone reste chez les arbitres. La manche se joue **à voix haute** : le
+donneur donne ses indices, le devineur propose. Les arbitres ne tranchent plus
+indice par indice — ils tapent **une seule fois**, `Trouvé` ou `Raté`, quand
+c'est fini. L'écran ne change pas de forme du début à la fin.
 
-- Le **rappel des interdits est le bouton de bannissement** : cadre parchemin,
-  disponible en permanence, jamais une étape obligatoire. Il garde sa
-  confirmation plein écran.
-- Le bouton 👁 affiche le mot tant qu'on maintient l'appui. Il n'est pas
-  décoratif : après un vol, le coéquipier du voleur n'a jamais vu le mot et doit
-  pourtant arbitrer.
-- `Annuler` reprend le dernier `Raté` — il coûte une braise.
+L'écran leur rappelle le contrat du tour et affiche en très gros la seule donnée
+qu'ils doivent tenir en tête : **le nombre d'indices** auquel l'équipe s'est
+engagée.
+
+```
+les Cendres ont volé en 2 coups
+Tibiane donne · Grognemousse devine
+              2
+        INDICES AU PLUS
+      [        👁        ]   <- au tap, le mot prend sa place
+   ⛔ banni — le mot, sa famille…
+      [ TROUVÉ ][ RATÉ ]
+```
+
+- Le bouton 👁 occupe le milieu de l'écran. Il n'est pas décoratif : après un
+  vol, le coéquipier du voleur n'a jamais vu le mot et doit pourtant arbitrer.
+- Le **rappel des interdits est le bouton de bannissement**, disponible en
+  permanence, jamais une étape obligatoire. Il garde sa confirmation plein écran.
+- Il n'y a plus d'`Annuler` : avec une validation unique, il n'y a plus d'état
+  intermédiaire à reprendre.
 
 ### 7. Les points
 
@@ -112,16 +126,22 @@ réponse dite à voix haute, et **un seul tap** : `Trouvé` ou `Raté`. Un `Rat�
 | `quota épuisé` — les coups sont consommés | aux arbitres |
 | `indice refusé` — un indice est banni | aux arbitres, tour interrompu |
 
-Dans les trois cas, **le donneur tourne pour les deux équipes concernées** :
-celle qui a ouvert et celle qui a joué le mot. Sans vol elles se confondent et la
-rotation n'avance qu'une fois. Avec vol, les deux avancent — sinon une équipe
-volée gardait le même donneur, et son coéquipier ne donnait jamais.
+### 8. Équité — trois alternances qu'un vol ne perturbe jamais
 
-### 8. Rotation et fin
+1. **Les équipes alternent l'ouverture**, vol ou pas. Le vol rapporte les points,
+   il ne donne plus le tour suivant.
+2. **Dans chaque équipe, le donneur alterne** à chaque ouverture de son équipe.
+3. **La proposition de vol alterne** elle aussi dans l'équipe qui la reçoit —
+   sinon le même joueur recevait toutes les propositions de la partie.
 
-Pas de vol : l'ouverture passe à l'autre équipe. Vol : le voleur garde la main.
+Sur quatre tours, chacun des quatre joueurs ouvre donc exactement une fois et se
+voit proposer un vol exactement une fois. C'est vérifié par `outils/regles.mjs`.
+
+### 9. La fin
+
 Franchir `CIBLE` **n'arrête pas la partie** — cela déclenche un dernier tour,
-ouvert par l'équipe menée. C'est le score après ce tour qui départage.
+ouvert par l'équipe menée. C'est la seule entorse assumée à l'alternance. Le
+score après ce tour départage.
 
 ## Les touches
 
@@ -156,8 +176,9 @@ dans l'ordre : cinq par tour, deux à 10 points, deux à 20, un à 30. Un mot ne
 peut donc jamais se représenter d'un tour à l'autre — auparavant les quatre mots
 écartés retournaient dans la pioche et revenaient parfois au tour suivant.
 
-Si un palier s'épuise, au-delà d'une vingtaine de tours, il est refait sans y
-remettre aucun mot déjà joué.
+**Un mot n'est jamais proposé deux fois dans une même partie**, joué ou non. Si
+un palier s'épuise, il n'est pas recyclé : la main se complète depuis les autres
+paliers.
 
 ## Éditer le corpus
 
@@ -177,12 +198,14 @@ avec un avatar ou un nom d'équipe ; les ambiguïtés sont voulues (glace, sang,
 
 Le bouton `log` n'apparaît qu'entre les temps forts — mise en place, tirage,
 résultat, fin — jamais par-dessus un bouton qui tranche. Une ligne par tour, avec
-le pari d'ouverture, le contre, l'issue et le coup final, plus deux colonnes qui
-comptent les **bannissements** et le **coup où ils tombent**.
+le pari d'ouverture, le contre, l'issue, et une colonne qui compte les
+**bannissements**.
 
-Ces deux colonnes ne sont pas décoratives : le bannissement est passé d'étape
+Cette colonne n'est pas décorative : le bannissement est passé d'étape
 obligatoire à bouton facultatif. Si le taux tombe près de zéro, l'arbitrage a
-disparu du jeu et il faudra en reparler. « Copier le log » met le tout dans le
+disparu du jeu et il faudra en reparler. Les colonnes « coup de fin » et « coup
+du bannissement » ont disparu : avec une validation unique, il n'y a plus de coup
+à numéroter. « Copier le log » met le tout dans le
 presse-papier en colonnes séparées par des `|`, prêt pour un tableur.
 
 ## Vérifier
