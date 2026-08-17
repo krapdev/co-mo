@@ -95,12 +95,22 @@ ne peut pas entrer.
 - **Le catalogue fait 1000 mots** (400 / 350 / 250 par palier). `regles.mjs`
   relit le corpus au démarrage (mot simple, minuscules, pas de doublon, pas de
   racine d'avatar ou d'équipe, pas de vocabulaire du jeu).
-- **Un mot proposé part en quarantaine pour 500 tirages** (`QUARANTAINE`), soit
-  une dizaine de parties. La file **traverse les parties et les rechargements**
-  (`kowo.pioche.v1`) : c'est le point, et `commence()` ne doit jamais la remettre
-  à zéro. Le tirage aléatoire par partie était le vrai défaut — chaque partie
-  était irréprochable prise seule, et un mot pouvait revenir 8 tirages plus tard
-  dans la suivante. Ne pas revenir à une pioche mélangée par partie.
+- **Un mot proposé part en quarantaine pour une demi-longueur de catalogue**
+  (`PART_QUARANTAINE`, la moitié — 500 tirages aujourd'hui, soit 11 parties). La
+  file **traverse les parties et les rechargements** (`kowo.pioche.v1`) : c'est
+  le point, et `commence()` ne doit jamais la remettre à zéro. Le tirage
+  aléatoire par partie était le vrai défaut — chaque partie était irréprochable
+  prise seule, et un mot pouvait revenir 8 tirages plus tard dans la suivante.
+  Ne pas revenir à une pioche mélangée par partie.
+- **La part est plafonnée par le palier le plus étroit**, pas par le total : la
+  quarantaine retient chaque palier à hauteur de sa part dans une main (2/5,
+  2/5, 1/5). À la moitié il reste 200/150/150 éligibles ; plus haut, le palier
+  20 passe sous zéro et la quarantaine se lèverait en silence. `regles.mjs`
+  mesure les trois paliers et refuse.
+- **L'horizon se mesure en parties, pas en mots.** `regles.mjs` publie « un mot
+  ne peut pas revenir avant N parties » et « tour complet en M parties » à
+  partir de la longueur réelle d'une partie. C'est le tableau de bord à
+  regarder avant d'élargir le corpus.
 - **Une seule validation par manche**, à la fin — plus de verdict indice par
   indice, plus de braises à décompter, plus d'`Annuler`. L'écran d'arbitrage
   rappelle le contrat du tour et affiche le nombre d'indices en très gros.

@@ -19,9 +19,11 @@
    CORPUS - 1000 mots (400 faciles, 350 moyens, 250 difficiles).
    Les cles sont les valeurs en points.
 
-   Un mot propose part en quarantaine : il ne revient pas avant que 500
-   autres mots aient ete tires - une dizaine de parties. La quarantaine
-   traverse les parties et les rechargements (voir QUARANTAINE).
+   Un mot propose part en quarantaine : il ne revient pas avant qu'une
+   MOITIE de catalogue ait ete tiree. Elargir le corpus recule donc
+   d'autant les repetitions. La quarantaine traverse les parties et les
+   rechargements (voir QUARANTAINE). `regles.mjs` chiffre ce que cela
+   donne en parties.
 
    Regles si tu elargis :
    - un seul mot, au singulier, sans article ;
@@ -944,15 +946,22 @@ function commence(){
    TIRAGE DES 5 MOTS - la quarantaine
 
    Un mot propose part en quarantaine : il ne peut pas revenir avant que
-   QUARANTAINE autres mots aient ete tires, soit une dizaine de parties.
+   QUARANTAINE autres mots aient ete tires.
 
    C'etait le vrai defaut de la version precedente : le catalogue etait
    melange au debut de CHAQUE partie et consomme depuis le haut. Rien ne
    survivait d'une partie a l'autre, et les mots de la partie d'avant
    pouvaient tomber des le premier tour de la suivante. La memoire doit
    donc survivre a la partie ET au rechargement.
+
+   La quarantaine est une PART du corpus, pas un nombre fixe : elargir le
+   catalogue doit reculer d'autant le moment ou un mot peut revenir. A la
+   moitie, il reste toujours l'autre moitie eligible - largement de quoi
+   servir une main de cinq mots dans les trois paliers. Monter au-dela
+   affamerait le palier le plus etroit ; `regles.mjs` le mesure et refuse.
    ============================================================ */
-const QUARANTAINE = 500;
+const PART_QUARANTAINE = 1 / 2;
+const QUARANTAINE = Math.floor(TAILLE_CORPUS * PART_QUARANTAINE);
 
 function chargeQuarantaine(){
   let l = [];

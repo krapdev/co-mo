@@ -206,10 +206,19 @@ tour : deux à 10, deux à 20, un à 30.
 
 ### La quarantaine
 
-**Un mot proposé ne peut pas revenir avant que 500 autres aient été tirés** —
-une partie en consomme une quarantaine, donc *une dizaine de parties*. Ce n'est
-pas une probabilité, c'est une garantie : le mot est tenu à l'écart du tirage
-jusqu'à ce que la file de 500 l'ait poussé dehors.
+**Un mot proposé ne peut pas revenir avant qu'une moitié de catalogue ait été
+tirée** — 500 mots aujourd'hui. Ce n'est pas une probabilité, c'est une
+garantie : le mot est tenu à l'écart du tirage jusqu'à ce que la file l'ait
+poussé dehors.
+
+La quarantaine est une **part** du corpus (`PART_QUARANTAINE`), pas un nombre
+fixe : élargir le catalogue recule d'autant le moment où un mot peut revenir.
+`regles.mjs` traduit ça en parties, seule unité qui parle :
+
+```
+horizon — 45 mots par partie · un mot ne peut pas revenir avant 11 parties
+          · tour complet du catalogue en 22 parties
+```
 
 Elle **traverse les parties et les rechargements** (`localStorage`, clé
 `kowo.pioche.v1`). C'est tout l'intérêt : le défaut n'était pas la taille du
@@ -219,10 +228,20 @@ le premier tour de la partie suivante. Mesuré sur 40 parties, l'écart le plus
 court entre deux apparitions d'un même mot était de **8 mots** ; il est
 aujourd'hui de 500, par construction.
 
-La quarantaine retient la moitié du catalogue : il reste en permanence 500 mots
-éligibles, dont ~150 dans le palier le plus étroit. Aucune perte de variété
-sensible. Si le corpus descendait sous ~505 mots elle serait levée à chaque
-tirage — `regles.mjs` refuse ce cas.
+La moitié est le maximum tenable. La quarantaine retient chaque palier à
+hauteur de sa part dans une main (2/5, 2/5, 1/5), et il doit rester de quoi
+servir cette main confortablement :
+
+| palier | mots | éligibles en permanence |
+| --- | --- | --- |
+| 10 | 400 | 200 |
+| 20 | 350 | 150 |
+| 30 | 250 | 150 |
+
+Monter la part affamerait le palier le plus étroit — à 90 %, le palier 20
+tomberait à **−10** mots éligibles et la quarantaine serait levée en silence à
+chaque tirage. `regles.mjs` mesure les trois paliers et refuse ce cas, au lieu
+de le subir.
 
 **Un mot n'est jamais proposé deux fois dans une même partie**, joué ou non : les
 quatre mots écartés partent en quarantaine comme celui qui a été joué.
@@ -239,7 +258,8 @@ vocabulaire du jeu (`indice`, `pari`, `coup`…) qui prêterait à confusion.
 Tout est en haut de `index.html`, dans un bloc `<script>` isolé :
 
 - `CORPUS` — les 1000 mots par palier de points (`10`, `20`, `30`).
-- `QUARANTAINE` — combien de mots doivent passer avant qu'un mot puisse revenir (500).
+- `PART_QUARANTAINE` — la part du catalogue tenue à l'écart du tirage (la moitié).
+  `QUARANTAINE` s'en déduit ; élargis le corpus et l'horizon suit tout seul.
 - `EQUIPES` — les deux noms d'équipe, forme longue et forme courte.
 - `TIRAGE` — la composition de la main de 5 mots (par défaut 2 faciles, 2 moyens, 1 dur).
 - `CIBLE` — le score qui déclenche le dernier tour (100).
@@ -291,7 +311,10 @@ comportements qui ne se lisent pas dans le code :
 - **La quarantaine** — l'écart réel entre deux apparitions d'un même mot, mesuré
   sur la suite complète des tirages, *parties confondues*. C'est là que le défaut
   se cachait : chaque partie prise isolément était irréprochable. Le script
-  vérifie aussi que la quarantaine est bien retrouvée après un rechargement.
+  vérifie aussi que la quarantaine est bien retrouvée après un rechargement, et
+  publie l'horizon en parties — les deux nombres à regarder avant d'élargir le
+  corpus, mesurés et non estimés : la longueur d'une partie dépend des règles de
+  fin autant que du hasard.
 - **L'œil** — le geste est rejoué avec un vrai pointeur : appui, dérive, sortie
   du bouton, relâchement.
 

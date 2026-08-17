@@ -41,15 +41,28 @@ const corpus = await page.evaluate(() => {
   }
   if (vus.size <= QUARANTAINE + 5)
     soucis.push(`corpus trop court (${vus.size}) pour une quarantaine de ${QUARANTAINE} : elle serait levee a chaque tirage`);
-  return { soucis, compte, total: vus.size, quarantaine: QUARANTAINE };
+
+  /* Un palier ne doit jamais etre affame. La quarantaine retient, dans le
+     palier v, la part que ce palier occupe dans une main : TIRAGE[v] sur 5.
+     Ce qui reste eligible doit couvrir largement une main. */
+  const parMain = Object.values(TIRAGE).reduce((a, n) => a + n, 0);
+  const libres = {};
+  for (const v of Object.keys(CORPUS)) {
+    const retenus = Math.round(QUARANTAINE * (TIRAGE[v] / parMain));
+    libres[v] = CORPUS[v].length - retenus;
+    if (libres[v] < TIRAGE[v] * 4)
+      soucis.push(`palier ${v} affame : ${libres[v]} mots eligibles pour ${TIRAGE[v]} par main`);
+  }
+  return { soucis, compte, libres, total: vus.size, quarantaine: QUARANTAINE };
 });
-console.log(`corpus ${corpus.total} mots · ` + Object.entries(corpus.compte).map(([v, n]) => `${v} pts : ${n}`).join(' · ')
-            + ` · quarantaine ${corpus.quarantaine}`);
+console.log(`corpus ${corpus.total} mots · `
+            + Object.entries(corpus.compte).map(([v, n]) => `${v} pts : ${n} (${corpus.libres[v]} eligibles)`).join(' · ')
+            + `\nquarantaine ${corpus.quarantaine} mots`);
 if (corpus.soucis.length) console.log(' - ' + corpus.soucis.join('\n - '));
 
 const r = await page.evaluate((PARTIES) => {
   const echecs = [];
-  let tours = 0, vols = 0, involables = 0, bans = 0, passagesVol = 0, passagesSansVol = 0;
+  let tours = 0, parties = 0, vols = 0, involables = 0, bans = 0, passagesVol = 0, passagesSansVol = 0;
   /* Tous les mots tires, dans l'ordre, PARTIES COMPRISES : c'est entre les
      parties que les repetitions se voyaient. On y mesurera l'ecart reel
      entre deux apparitions d'un meme mot. */
@@ -112,6 +125,7 @@ const r = await page.evaluate((PARTIES) => {
     E.choix = ['mousserot', 'brumaille', 'tibiane', 'grognemousse'];
     E.reprise = false;
     commence();
+    parties++;
 
     let garde = 0;
     const vus = new Set();          // tous les mots deja proposes cette partie
@@ -202,7 +216,7 @@ const r = await page.evaluate((PARTIES) => {
   });
   if (ecartMin < QUARANTAINE) echecs.push(`« ${motMin} » revenu apres ${ecartMin} mots, quarantaine ${QUARANTAINE}`);
 
-  return { tours, vols, involables, bans, passagesVol, passagesSansVol, echecs,
+  return { tours, parties, vols, involables, bans, passagesVol, passagesSansVol, echecs,
            tirages: tirages.length, distincts: derniere.size,
            ecartMin: ecartMin === Infinity ? null : ecartMin };
 }, PARTIES);
@@ -210,6 +224,14 @@ const r = await page.evaluate((PARTIES) => {
 console.log(`tours ${r.tours} · vols ${r.vols} · paris involables ${r.involables} · bannissements ${r.bans}`);
 console.log(`passages — avec vol ${r.passagesVol} (attendu ${r.vols * 3}) · sans vol ${r.passagesSansVol} (attendu ${(r.tours - r.vols) * 2})`);
 console.log(`mots tires ${r.tirages} · distincts ${r.distincts} · plus petit ecart entre deux apparitions ${r.ecartMin}`);
+
+/* L'HORIZON — les deux nombres a regarder au moment d'elargir le corpus.
+   Ils sont mesures, pas estimes : la longueur d'une partie depend des
+   regles de fin autant que du hasard. */
+const parPartie = r.tirages / r.parties;
+console.log(`horizon — ${parPartie.toFixed(0)} mots par partie`
+  + ` · un mot ne peut pas revenir avant ${(corpus.quarantaine / parPartie).toFixed(0)} parties`
+  + ` · tour complet du catalogue en ${(corpus.total / parPartie).toFixed(0)} parties`);
 
 /* LA FIN — trois cas de figure, joues explicitement. */
 const fin = await page.evaluate(() => {
